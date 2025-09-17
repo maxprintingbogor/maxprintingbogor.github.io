@@ -1,16 +1,314 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website Sederhana</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
-    h1 { color: #007BFF; }
-  </style>
+<meta charset="UTF-8">
+<title>Layout Polaroid Center</title>
+<style>
+body {
+  margin: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f5f5;
+}
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+select, textarea, input[type="file"], input[type="color"] {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+textarea {
+  flex:1;
+  min-width: 300px;
+  resize: vertical;
+}
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(90deg,#4facfe,#00f2fe);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  background: linear-gradient(90deg,#00f2fe,#4facfe);
+}
+#preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+#preview img {
+  height: 120px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+#preview img:hover {
+  transform: scale(1.05);
+}
+#progressContainer {
+  width: 100%;
+  margin: 10px 0;
+  display: none;
+  background: #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  height: 25px;
+}
+#progressBar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg,#4facfe,#00f2fe);
+  transition: width 0.3s;
+}
+#progressText {
+  position: absolute;
+  width: 100%;
+  top: 0; left: 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 25px;
+  color: #333;
+  font-weight: bold;
+}
+/* Label versi */
+#appVersion {
+  width:100%;
+  text-align:right;
+  font-size:12px;
+  color:#555;
+  margin-top:5px;
+  font-style: italic;
+}
+/* Responsive untuk mobile */
+@media(max-width:768px){
+  #controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  textarea {
+    min-width:100%;
+  }
+}
+</style>
 </head>
 <body>
-  <h1>Halo Dunia!</h1>
-  <p>Ini adalah website sederhana pertamaku.</p>
+
+<div id="controls">
+  <input type="file" id="upload" multiple accept="image/*">
+  <select id="sizeSelect">
+    <option value="6x9">2R (6x9 cm)</option>
+    <option value="8.9x12.7">3R (8.9x12.7 cm)</option>
+    <option value="10.2x15.2">4R (10.2x15.2 cm)</option>
+    <option value="12.7x17.8">5R (12.7x17.8 cm)</option>
+    <option value="15.2x20.3">6R (15.2x20.3 cm)</option>
+    <option value="20.3x25.4">8R (20.3x25.4 cm)</option>
+  </select>
+  <select id="bgSelect">
+    <option value="white">Putih</option>
+    <option value="black">Hitam</option>
+    <option value="gray">Abu-abu</option>
+    <option value="blue">Biru</option>
+    <option value="cream">Cream</option>
+    <option value="pink">Pink</option>
+    <option value="custom">Custom Warna</option>
+    <option value="image">Background Gambar</option>
+  </select>
+  <input type="color" id="customColor" style="display:none;">
+  <input type="file" id="bgImageInput" accept="image/*" style="display:none;">
+  <textarea id="captionInput" placeholder="Tulis caption di sini" rows="2"></textarea>
+  <button id="savePDF">Simpan PDF</button>
+  <button id="resetBtn">Reset</button>
+</div>
+
+<div id="appVersion">Versi 1.0.0</div>
+
+<div id="progressContainer">
+  <div id="progressBar"></div>
+  <div id="progressText">0%</div>
+</div>
+
+<div id="preview"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const { jsPDF } = window.jspdf;
+const upload = document.getElementById('upload');
+const sizeSelect = document.getElementById('sizeSelect');
+const bgSelect = document.getElementById('bgSelect');
+const customColor = document.getElementById('customColor');
+const bgImageInput = document.getElementById('bgImageInput');
+const captionInput = document.getElementById('captionInput');
+const saveBtn = document.getElementById('savePDF');
+const resetBtn = document.getElementById('resetBtn');
+const previewDiv = document.getElementById('preview');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+
+let currentFiles = [];
+let bgImage = null;
+
+const margin = 0.5, border = 0.5, bottom = 1.5;
+const cropMarkLen = 0.5, cropMarkThickness = 0.02;
+
+bgSelect.addEventListener("change", () => {
+  customColor.style.display = bgSelect.value === "custom" ? "inline-block" : "none";
+  bgImageInput.style.display = bgSelect.value === "image" ? "inline-block" : "none";
+});
+
+bgImageInput.addEventListener("change", e => {
+  if (e.target.files.length) {
+    const reader = new FileReader();
+    reader.onload = ev => { bgImage = ev.target.result; };
+    reader.readAsDataURL(e.target.files[0]);
+  }
+});
+
+upload.addEventListener('change', () => {
+  currentFiles = Array.from(upload.files);
+  previewDiv.innerHTML = "";
+  currentFiles.forEach(file => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const [w, h] = sizeSelect.value.split('x').map(Number);
+      const data = createPolaroid(img, w, h, 72, bgSelect.value, customColor.value, bgImage);
+      const thumb = document.createElement("img");
+      thumb.src = data;
+      previewDiv.appendChild(thumb);
+    };
+  });
+});
+
+function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImg) {
+  const canvas = document.createElement('canvas');
+  canvas.width = W*dpi;
+  canvas.height = H*dpi;
+  const ctx = canvas.getContext('2d');
+
+  if(bgOption==="image" && bgImg){
+    const bg = new Image();
+    bg.src = bgImg;
+    ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+  } else {
+    ctx.fillStyle = bgOption==="custom"?customCol:bgOption;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  let drawImg = img;
+  if(img.width>img.height){
+    const rotated=document.createElement('canvas');
+    rotated.width=img.height; rotated.height=img.width;
+    const rctx=rotated.getContext('2d');
+    rctx.translate(img.height,0); rctx.rotate(Math.PI/2);
+    rctx.drawImage(img,0,0);
+    drawImg=rotated;
+  }
+
+  const photoW=canvas.width-border*2*dpi;
+  const photoH=canvas.height-(border+bottom)*dpi;
+  const photoX=border*dpi, photoY=border*dpi;
+
+  const ratio=Math.min(photoW/drawImg.width,photoH/drawImg.height);
+  const drawW=drawImg.width*ratio, drawH=drawImg.height*ratio;
+  const offsetX=photoX+(photoW-drawW)/2, offsetY=photoY+(photoH-drawH)/2;
+
+  ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+  return canvas.toDataURL("image/jpeg",0.92);
+}
+
+saveBtn.addEventListener('click', async ()=>{
+  if(!currentFiles.length) return alert("Upload foto dulu!");
+  const [w,h]=sizeSelect.value.split('x').map(Number);
+  const pdf=new jsPDF({unit:'cm', format:[32,48]});
+
+  const cols=Math.floor((32-2*margin)/w);
+  const rows=Math.floor((48-2*margin)/h);
+  const perPage=cols*rows;
+
+  progressContainer.style.display="block";
+  let done=0, total=currentFiles.length;
+
+  for(let i=0;i<currentFiles.length;i+=perPage){
+    if(i>0) pdf.addPage();
+    const pageFiles=currentFiles.slice(i,i+perPage);
+    const totalWidth=cols*w, totalHeight=rows*h;
+    const leftOffset=margin+(32-2*margin-totalWidth)/2;
+    const topOffset=margin+(48-2*margin-totalHeight)/2;
+
+    // Crop marks
+    pdf.setLineWidth(cropMarkThickness);
+    for(let c=0;c<=cols;c++){
+      const x=leftOffset+c*w;
+      pdf.line(x,topOffset-cropMarkLen,x,topOffset);
+      pdf.line(x,topOffset+totalHeight,x,topOffset+totalHeight+cropMarkLen);
+    }
+    for(let r=0;r<=rows;r++){
+      const y=topOffset+r*h;
+      pdf.line(leftOffset-cropMarkLen,y,leftOffset,y);
+      pdf.line(leftOffset+totalWidth,y,leftOffset+totalWidth+cropMarkLen,y);
+    }
+
+    pdf.setFontSize(14);
+    pdf.text(captionInput.value||"",16,topOffset+totalHeight+1.2,{align:"center"});
+
+    // Process images in parallel for speed
+    await Promise.all(pageFiles.map((file, idx)=>{
+      return new Promise(res=>{
+        const img=new Image();
+        img.src=URL.createObjectURL(file);
+        img.onload=()=>{
+          const data=createPolaroid(img,w,h,200,bgSelect.value,customColor.value,bgImage);
+          const col=idx%cols, row=Math.floor(idx/cols);
+          const x=leftOffset+col*w, y=topOffset+row*h;
+          pdf.addImage(data,'JPEG',x,y,w,h);
+          done++;
+          const percent=((done/total)*100).toFixed(1);
+          progressBar.style.width=percent+"%";
+          progressText.textContent=percent+"%";
+          res();
+        };
+      });
+    }));
+  }
+
+  let filename=captionInput.value.trim()||"layout-polaroid";
+  filename=filename.replace(/[^a-zA-Z0-9-_ ]/g,"");
+  pdf.save(filename+".pdf");
+  progressContainer.style.display="none";
+  progressBar.style.width="0%";
+  progressText.textContent="0%";
+});
+
+resetBtn.addEventListener('click',()=>{
+  upload.value=""; currentFiles=[];
+  sizeSelect.value="6x9";
+  bgSelect.value="white";
+  customColor.value="#ffffff"; customColor.style.display="none";
+  bgImageInput.value=""; bgImageInput.style.display="none";
+  bgImage=null;
+  captionInput.value="";
+  previewDiv.innerHTML="";
+  progressContainer.style.display="none";
+  progressBar.style.width="0%";
+  progressText.textContent="0%";
+});
+</script>
 </body>
 </html>
