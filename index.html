@@ -4,107 +4,21 @@
 <meta charset="UTF-8">
 <title>Layout Polaroid Center</title>
 <style>
-body {
-  margin: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5f5f5;
-}
-#controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 15px;
-  padding: 15px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-select, textarea, input[type="file"], input[type="color"] {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
-textarea {
-  flex:1;
-  min-width: 300px;
-  resize: vertical;
-}
-button {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  background: linear-gradient(90deg,#4facfe,#00f2fe);
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-button:hover {
-  background: linear-gradient(90deg,#00f2fe,#4facfe);
-}
-#preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-#preview img {
-  height: 120px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  object-fit: cover;
-  transition: transform 0.2s;
-}
-#preview img:hover {
-  transform: scale(1.05);
-}
-#progressContainer {
-  width: 100%;
-  margin: 10px 0;
-  display: none;
-  background: #eee;
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  height: 25px;
-}
-#progressBar {
-  width: 0%;
-  height: 100%;
-  background: linear-gradient(90deg,#4facfe,#00f2fe);
-  transition: width 0.3s;
-}
-#progressText {
-  position: absolute;
-  width: 100%;
-  top: 0; left: 0;
-  text-align: center;
-  font-size: 14px;
-  line-height: 25px;
-  color: #333;
-  font-weight: bold;
-}
-/* Label versi */
-#appVersion {
-  width:100%;
-  text-align:right;
-  font-size:12px;
-  color:#555;
-  margin-top:5px;
-  font-style: italic;
-}
-/* Responsive untuk mobile */
-@media(max-width:768px){
-  #controls {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  textarea {
-    min-width:100%;
-  }
-}
+body { margin:20px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5; }
+#controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:15px; padding:15px; background:#fff; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+select, textarea, input[type="file"], input[type="color"] { padding:8px 12px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
+textarea { flex:1; min-width:300px; resize:vertical; }
+button { padding:10px 16px; border:none; border-radius:6px; background:linear-gradient(90deg,#4facfe,#00f2fe); color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
+button:hover { background:linear-gradient(90deg,#00f2fe,#4facfe); }
+#preview { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+#preview img { height:120px; border:2px solid #ddd; border-radius:6px; object-fit:cover; transition: transform 0.2s; }
+#preview img:hover { transform:scale(1.05); }
+#progressContainer { width:100%; margin:10px 0; display:none; background:#eee; border-radius:10px; overflow:hidden; position:relative; height:25px; }
+#progressBar { width:0%; height:100%; background:linear-gradient(90deg,#4facfe,#00f2fe); transition:width 0.3s; }
+#progressText { position:absolute; width:100%; top:0; left:0; text-align:center; font-size:14px; line-height:25px; color:#333; font-weight:bold; }
+#infoKeterangan { margin:5px 0 10px; font-size:14px; font-weight:bold; color:#222; }
+#appVersion { width:100%; text-align:right; font-size:12px; color:#555; margin-top:5px; font-style:italic; }
+@media(max-width:768px){ #controls { flex-direction:column; align-items:flex-start; } textarea { min-width:100%; } }
 </style>
 </head>
 <body>
@@ -136,13 +50,12 @@ button:hover {
   <button id="resetBtn">Reset</button>
 </div>
 
-<div id="appVersion">Versi 1.0.0</div>
-
+<div id="appVersion">Versi 1.1.0</div>
 <div id="progressContainer">
   <div id="progressBar"></div>
   <div id="progressText">0%</div>
 </div>
-
+<div id="infoKeterangan"></div>
 <div id="preview"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -160,58 +73,101 @@ const previewDiv = document.getElementById('preview');
 const progressContainer = document.getElementById('progressContainer');
 const progressBar = document.getElementById('progressBar');
 const progressText = document.getElementById('progressText');
+const infoKeterangan = document.getElementById('infoKeterangan');
 
 let currentFiles = [];
 let bgImage = null;
 
-const margin = 0.5, border = 0.5, bottom = 1.5;
-const cropMarkLen = 0.5, cropMarkThickness = 0.02;
+// Konfigurasi layout per ukuran
+const layoutConfig = {
+  "6x9": {margin:0.5, border:0.5, bottom:1.5},
+  "8.9x12.7": {margin:0.6, border:0.6, bottom:1.6},
+  "10.2x15.2": {margin:0.7, border:0.7, bottom:1.7},
+  "12.7x17.8": {margin:0.8, border:0.8, bottom:1.8},
+  "15.2x20.3": {margin:0.9, border:0.9, bottom:1.9},
+  "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0}
+};
+
+function getLayoutConfig(){
+  const size = sizeSelect.value;
+  return layoutConfig[size] || {margin:0.5, border:0.5, bottom:1.5};
+}
 
 bgSelect.addEventListener("change", () => {
-  customColor.style.display = bgSelect.value === "custom" ? "inline-block" : "none";
-  bgImageInput.style.display = bgSelect.value === "image" ? "inline-block" : "none";
+  customColor.style.display = bgSelect.value==="custom" ? "inline-block" : "none";
+  bgImageInput.style.display = bgSelect.value==="image" ? "inline-block" : "none";
 });
-
 bgImageInput.addEventListener("change", e => {
-  if (e.target.files.length) {
+  if(e.target.files.length){
     const reader = new FileReader();
     reader.onload = ev => { bgImage = ev.target.result; };
     reader.readAsDataURL(e.target.files[0]);
   }
 });
 
-upload.addEventListener('change', () => {
+// Hitung jumlah foto & orientasi optimal
+function calculateOptimal(w,h){
+  const {margin} = getLayoutConfig();
+  const options = [
+    {pageW:32,pageH:48,w:w,h:h,orientation:'portrait'},
+    {pageW:48,pageH:32,w:w,h:h,orientation:'landscape'}
+  ];
+  let best = options[0], maxPerPage=0;
+  options.forEach(opt=>{
+    const cols=Math.floor((opt.pageW-2*margin)/opt.w);
+    const rows=Math.floor((opt.pageH-2*margin)/opt.h);
+    const perPage=cols*rows;
+    if(perPage>maxPerPage){ maxPerPage=perPage; best=opt; }
+  });
+  return best;
+}
+
+function updateKeterangan(){
+  if(currentFiles.length===0){ infoKeterangan.textContent=""; return; }
+  let [w,h] = sizeSelect.value.split('x').map(Number);
+  const opt = calculateOptimal(w,h);
+  const {margin} = getLayoutConfig();
+  const cols = Math.floor((opt.pageW-2*margin)/opt.w);
+  const rows = Math.floor((opt.pageH-2*margin)/opt.h);
+  const perPage = cols*rows;
+  const lembar = Math.ceil(currentFiles.length/perPage);
+  infoKeterangan.textContent = `${currentFiles.length} foto = ${lembar} lembar (${perPage} foto / lembar)`;
+}
+
+upload.addEventListener('change', ()=>{
   currentFiles = Array.from(upload.files);
   previewDiv.innerHTML = "";
-  currentFiles.forEach(file => {
+  updateKeterangan();
+  currentFiles.forEach(file=>{
     const img = new Image();
     img.src = URL.createObjectURL(file);
-    img.onload = () => {
-      const [w, h] = sizeSelect.value.split('x').map(Number);
-      const data = createPolaroid(img, w, h, 72, bgSelect.value, customColor.value, bgImage);
-      const thumb = document.createElement("img");
-      thumb.src = data;
+    img.onload = ()=>{
+      const [w,h]=sizeSelect.value.split('x').map(Number);
+      const data=createPolaroid(img,w,h,72,bgSelect.value,customColor.value,bgImage);
+      const thumb=document.createElement("img");
+      thumb.src=data;
       previewDiv.appendChild(thumb);
     };
   });
 });
 
-function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImg) {
-  const canvas = document.createElement('canvas');
-  canvas.width = W*dpi;
-  canvas.height = H*dpi;
-  const ctx = canvas.getContext('2d');
+sizeSelect.addEventListener("change", updateKeterangan);
 
+function createPolaroid(img,W,H,dpi,bgOption,customCol,bgImg){
+  const {border,bottom} = getLayoutConfig();
+  const canvas=document.createElement('canvas');
+  canvas.width=W*dpi;
+  canvas.height=H*dpi;
+  const ctx=canvas.getContext('2d');
   if(bgOption==="image" && bgImg){
-    const bg = new Image();
-    bg.src = bgImg;
+    const bg=new Image();
+    bg.src=bgImg;
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
   } else {
-    ctx.fillStyle = bgOption==="custom"?customCol:bgOption;
+    ctx.fillStyle=bgOption==="custom"?customCol:bgOption;
     ctx.fillRect(0,0,canvas.width,canvas.height);
   }
-
-  let drawImg = img;
+  let drawImg=img;
   if(img.width>img.height){
     const rotated=document.createElement('canvas');
     rotated.width=img.height; rotated.height=img.width;
@@ -220,26 +176,25 @@ function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImg) {
     rctx.drawImage(img,0,0);
     drawImg=rotated;
   }
-
   const photoW=canvas.width-border*2*dpi;
   const photoH=canvas.height-(border+bottom)*dpi;
   const photoX=border*dpi, photoY=border*dpi;
-
   const ratio=Math.min(photoW/drawImg.width,photoH/drawImg.height);
   const drawW=drawImg.width*ratio, drawH=drawImg.height*ratio;
   const offsetX=photoX+(photoW-drawW)/2, offsetY=photoY+(photoH-drawH)/2;
-
-  ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+  ctx.drawImage(drawImg,offsetX,offsetY,drawW,drawH);
   return canvas.toDataURL("image/jpeg",0.92);
 }
 
+// Simpan PDF
 saveBtn.addEventListener('click', async ()=>{
   if(!currentFiles.length) return alert("Upload foto dulu!");
-  const [w,h]=sizeSelect.value.split('x').map(Number);
-  const pdf=new jsPDF({unit:'cm', format:[32,48]});
-
-  const cols=Math.floor((32-2*margin)/w);
-  const rows=Math.floor((48-2*margin)/h);
+  let [w,h]=sizeSelect.value.split('x').map(Number);
+  const {margin,border,bottom}=getLayoutConfig();
+  const opt=calculateOptimal(w,h);
+  const pdf=new jsPDF({unit:'cm',format:[opt.pageW,opt.pageH],orientation:opt.orientation});
+  const cols=Math.floor((opt.pageW-2*margin)/opt.w);
+  const rows=Math.floor((opt.pageH-2*margin)/opt.h);
   const perPage=cols*rows;
 
   progressContainer.style.display="block";
@@ -248,36 +203,34 @@ saveBtn.addEventListener('click', async ()=>{
   for(let i=0;i<currentFiles.length;i+=perPage){
     if(i>0) pdf.addPage();
     const pageFiles=currentFiles.slice(i,i+perPage);
-    const totalWidth=cols*w, totalHeight=rows*h;
-    const leftOffset=margin+(32-2*margin-totalWidth)/2;
-    const topOffset=margin+(48-2*margin-totalHeight)/2;
+    const totalWidth=cols*opt.w, totalHeight=rows*opt.h;
+    const leftOffset=margin+(opt.pageW-2*margin-totalWidth)/2;
+    const topOffset=margin+(opt.pageH-2*margin-totalHeight)/2;
 
-    // Crop marks
-    pdf.setLineWidth(cropMarkThickness);
+    pdf.setLineWidth(0.02);
     for(let c=0;c<=cols;c++){
-      const x=leftOffset+c*w;
-      pdf.line(x,topOffset-cropMarkLen,x,topOffset);
-      pdf.line(x,topOffset+totalHeight,x,topOffset+totalHeight+cropMarkLen);
+      const x=leftOffset+c*opt.w;
+      pdf.line(x, topOffset-0.5-0.2, x, topOffset-0.2);
+      pdf.line(x, topOffset+totalHeight+0.2, x, topOffset+totalHeight+0.5+0.2);
     }
     for(let r=0;r<=rows;r++){
-      const y=topOffset+r*h;
-      pdf.line(leftOffset-cropMarkLen,y,leftOffset,y);
-      pdf.line(leftOffset+totalWidth,y,leftOffset+totalWidth+cropMarkLen,y);
+      const y=topOffset+r*opt.h;
+      pdf.line(leftOffset-0.5-0.2, y, leftOffset-0.2, y);
+      pdf.line(leftOffset+totalWidth+0.2, y, leftOffset+totalWidth+0.5+0.2, y);
     }
 
     pdf.setFontSize(14);
-    pdf.text(captionInput.value||"",16,topOffset+totalHeight+1.2,{align:"center"});
+    pdf.text(captionInput.value||"",opt.pageW/2,topOffset+totalHeight+1.2,{align:"center"});
 
-    // Process images in parallel for speed
-    await Promise.all(pageFiles.map((file, idx)=>{
+    await Promise.all(pageFiles.map((file,idx)=>{
       return new Promise(res=>{
         const img=new Image();
         img.src=URL.createObjectURL(file);
         img.onload=()=>{
-          const data=createPolaroid(img,w,h,200,bgSelect.value,customColor.value,bgImage);
+          const data=createPolaroid(img,opt.w,opt.h,200,bgSelect.value,customColor.value,bgImage);
           const col=idx%cols, row=Math.floor(idx/cols);
-          const x=leftOffset+col*w, y=topOffset+row*h;
-          pdf.addImage(data,'JPEG',x,y,w,h);
+          const x=leftOffset+col*opt.w, y=topOffset+row*opt.h;
+          pdf.addImage(data,'JPEG',x,y,opt.w,opt.h);
           done++;
           const percent=((done/total)*100).toFixed(1);
           progressBar.style.width=percent+"%";
@@ -296,6 +249,7 @@ saveBtn.addEventListener('click', async ()=>{
   progressText.textContent="0%";
 });
 
+// Reset
 resetBtn.addEventListener('click',()=>{
   upload.value=""; currentFiles=[];
   sizeSelect.value="6x9";
@@ -305,6 +259,7 @@ resetBtn.addEventListener('click',()=>{
   bgImage=null;
   captionInput.value="";
   previewDiv.innerHTML="";
+  infoKeterangan.textContent="";
   progressContainer.style.display="none";
   progressBar.style.width="0%";
   progressText.textContent="0%";
