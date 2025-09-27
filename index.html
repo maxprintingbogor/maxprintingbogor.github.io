@@ -46,11 +46,12 @@ button:hover { background:linear-gradient(90deg,#00f2fe,#4facfe); }
   <input type="color" id="customColor" style="display:none;">
   <input type="file" id="bgImageInput" accept="image/*" style="display:none;">
   <textarea id="captionInput" placeholder="Tulis caption di sini" rows="2"></textarea>
+  <label><input type="checkbox" id="marginColorToggle" checked> Margin Berwarna</label>
   <button id="savePDF">Simpan PDF</button>
   <button id="resetBtn">Reset</button>
 </div>
 
-<div id="appVersion">Versi 1.1.0</div>
+<div id="appVersion">Versi 1.3.0</div>
 <div id="progressContainer">
   <div id="progressBar"></div>
   <div id="progressText">0%</div>
@@ -74,9 +75,15 @@ const progressContainer = document.getElementById('progressContainer');
 const progressBar = document.getElementById('progressBar');
 const progressText = document.getElementById('progressText');
 const infoKeterangan = document.getElementById('infoKeterangan');
+const marginColorToggle = document.getElementById('marginColorToggle');
 
 let currentFiles = [];
 let bgImage = null;
+
+// Warna otomatis
+const autoColors = ["#ff0000", "#00b050", "#0070c0", "#7030a0", "#FFDC00", "#00EAFF", "#ff69b4", "#828282", "#C28FF3", "#91E7FF"];
+let colorIndex = -1;
+let currentColor = autoColors[0];
 
 // Konfigurasi layout per ukuran
 const layoutConfig = {
@@ -105,7 +112,6 @@ bgImageInput.addEventListener("change", e => {
   }
 });
 
-// Hitung jumlah foto & orientasi optimal
 function calculateOptimal(w,h){
   const {margin} = getLayoutConfig();
   const options = [
@@ -138,6 +144,13 @@ upload.addEventListener('change', ()=>{
   currentFiles = Array.from(upload.files);
   previewDiv.innerHTML = "";
   updateKeterangan();
+
+  // ganti warna sekali setiap upload baru
+  if(currentFiles.length>0){
+    colorIndex = (colorIndex+1) % autoColors.length;
+    currentColor = autoColors[colorIndex];
+  }
+
   currentFiles.forEach(file=>{
     const img = new Image();
     img.src = URL.createObjectURL(file);
@@ -186,11 +199,10 @@ function createPolaroid(img,W,H,dpi,bgOption,customCol,bgImg){
   return canvas.toDataURL("image/jpeg",0.92);
 }
 
-// Simpan PDF
 saveBtn.addEventListener('click', async ()=>{
   if(!currentFiles.length) return alert("Upload foto dulu!");
   let [w,h]=sizeSelect.value.split('x').map(Number);
-  const {margin,border,bottom}=getLayoutConfig();
+  const {margin}=getLayoutConfig();
   const opt=calculateOptimal(w,h);
   const pdf=new jsPDF({unit:'cm',format:[opt.pageW,opt.pageH],orientation:opt.orientation});
   const cols=Math.floor((opt.pageW-2*margin)/opt.w);
@@ -207,16 +219,28 @@ saveBtn.addEventListener('click', async ()=>{
     const leftOffset=margin+(opt.pageW-2*margin-totalWidth)/2;
     const topOffset=margin+(opt.pageH-2*margin-totalHeight)/2;
 
-    pdf.setLineWidth(0.02);
-    for(let c=0;c<=cols;c++){
-      const x=leftOffset+c*opt.w;
-      pdf.line(x, topOffset-0.5-0.2, x, topOffset-0.2);
-      pdf.line(x, topOffset+totalHeight+0.2, x, topOffset+totalHeight+0.5+0.2);
+    // Warna margin (hanya jika checkbox aktif)
+    if(marginColorToggle.checked){
+      const r=parseInt(currentColor.substr(1,2),16);
+      const g=parseInt(currentColor.substr(3,2),16);
+      const b=parseInt(currentColor.substr(5,2),16);
+      pdf.setFillColor(r,g,b);
+      pdf.rect(0,0,opt.pageW,margin,"F");
+      pdf.rect(0,0,margin,opt.pageH,"F");
+      pdf.rect(opt.pageW-margin,0,margin,opt.pageH,"F");
     }
-    for(let r=0;r<=rows;r++){
-      const y=topOffset+r*opt.h;
-      pdf.line(leftOffset-0.5-0.2, y, leftOffset-0.2, y);
-      pdf.line(leftOffset+totalWidth+0.2, y, leftOffset+totalWidth+0.5+0.2, y);
+
+    // Crop mark
+    pdf.setLineWidth(0.02);
+    for (let c = 0; c <= cols; c++) {
+      const x = leftOffset + c * opt.w;
+      pdf.line(x, topOffset - 0.5 - 0.2, x, topOffset - 0.2);
+      pdf.line(x, topOffset + totalHeight + 0.2, x, topOffset + totalHeight + 0.5 + 0.2);
+    }
+    for (let r = 0; r <= rows; r++) {
+      const y = topOffset + r * opt.h;
+      pdf.line(leftOffset - 0.5 - 0.2, y, leftOffset - 0.2, y);
+      pdf.line(leftOffset + totalWidth + 0.2, y, leftOffset + totalWidth + 0.5 + 0.2, y);
     }
 
     pdf.setFontSize(14);
@@ -249,7 +273,6 @@ saveBtn.addEventListener('click', async ()=>{
   progressText.textContent="0%";
 });
 
-// Reset
 resetBtn.addEventListener('click',()=>{
   upload.value=""; currentFiles=[];
   sizeSelect.value="6x9";
