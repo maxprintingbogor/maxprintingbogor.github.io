@@ -118,13 +118,13 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <input type="file" id="bgImageInput" accept="image/*" style="display:none;">
   <textarea id="captionInput" placeholder="Tulis caption di sini" rows="2"></textarea>
   <label><input type="checkbox" id="marginColorToggle" checked> Margin Berwarna</label>
-  <label><input type="checkbox" id="autoCaptionToggle"> Isi Caption Otomatis </label>
+  <label><input type="checkbox" id="autoCaptionToggle"> Isi Caption Otomatis</label>
   <button id="savePDF">Simpan PDF</button>
   <button id="resetBtn">Reset</button>
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.5.4</div>
+<div id="appVersion">Versi 1.5.6</div>
 <div id="progressContainer">
   <div id="progressBar"></div>
   <div id="progressText">0%</div>
@@ -137,48 +137,29 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-/* ==== Script replacement v1.5.8-patch (JS only) ==== */
-/* Keeps HTML/CSS intact; fixes preview, progress, info, ALT tooltip, memory leaks. */
-/* No functional changes to original behavior. Improved safety & performance. */
-
+/* Full working script: all buttons and features included, with dynamic auto-caption */
 (function(){
   'use strict';
   const { jsPDF } = window.jspdf || {};
-
-  // Grab elements and bail early if required elements are missing
-  const getEl = id => document.getElementById(id);
-  const upload = getEl('upload');
-  const sizeSelect = getEl('sizeSelect');
-  const bgSelect = getEl('bgSelect');
-  const customColor = getEl('customColor');
-  const bgImageInput = getEl('bgImageInput');
-  const captionInput = getEl('captionInput');
-  const saveBtn = getEl('savePDF');
-  const resetBtn = getEl('resetBtn');
-  const previewDiv = getEl('preview');
-  const progressContainer = getEl('progressContainer');
-  const progressBar = getEl('progressBar');
-  const progressText = getEl('progressText');
-  const infoKeterangan = getEl('infoKeterangan');
-  const marginColorToggle = getEl('marginColorToggle');
-  const darkToggle = getEl('darkToggle');
-  const autoCaptionToggle = getEl('autoCaptionToggle');
-  const imgModal = getEl('imgModal');
-  const modalImg = getEl('modalImg');
-
-  const required = [
-    {name:'upload', el:upload},{name:'sizeSelect', el:sizeSelect},{name:'bgSelect', el:bgSelect},
-    {name:'customColor', el:customColor},{name:'bgImageInput', el:bgImageInput},{name:'captionInput', el:captionInput},
-    {name:'savePDF', el:saveBtn},{name:'resetBtn', el:resetBtn},{name:'preview', el:previewDiv},
-    {name:'progressContainer', el:progressContainer},{name:'progressBar', el:progressBar},{name:'progressText', el:progressText},
-    {name:'infoKeterangan', el:infoKeterangan},{name:'marginColorToggle', el:marginColorToggle},{name:'darkToggle', el:darkToggle},
-    {name:'autoCaptionToggle', el:autoCaptionToggle},{name:'imgModal', el:imgModal},{name:'modalImg', el:modalImg}
-  ];
-  const missing = required.filter(r => !r.el).map(r => r.name);
-  if(missing.length){
-    console.warn('Polaroid script: missing required elements:', missing);
-    // Fail gracefully: do not throw, but avoid attaching handlers to null elements.
-  }
+  // Elements
+  const upload = document.getElementById('upload');
+  const sizeSelect = document.getElementById('sizeSelect');
+  const bgSelect = document.getElementById('bgSelect');
+  const customColor = document.getElementById('customColor');
+  const bgImageInput = document.getElementById('bgImageInput');
+  const captionInput = document.getElementById('captionInput');
+  const saveBtn = document.getElementById('savePDF');
+  const resetBtn = document.getElementById('resetBtn');
+  const previewDiv = document.getElementById('preview');
+  const progressContainer = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const infoKeterangan = document.getElementById('infoKeterangan');
+  const marginColorToggle = document.getElementById('marginColorToggle');
+  const darkToggle = document.getElementById('darkToggle');
+  const autoCaptionToggle = document.getElementById('autoCaptionToggle');
+  const imgModal = document.getElementById('imgModal');
+  const modalImg = document.getElementById('modalImg');
 
   // State
   let currentFiles = [];
@@ -187,43 +168,34 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   let colorIndex = -1, currentColor = autoColors[0];
 
   const layoutConfig = {
-    "6x9": {margin:0.5, border:0.5, bottom:1.5, pageW:32, pageH:48, w:6, h:9},
-    "8.9x12.7": {margin:0.6, border:0.6, bottom:1.6, pageW:32, pageH:48, w:8.9, h:12.7},
-    "10.2x15.2": {margin:0.7, border:0.7, bottom:1.7, pageW:32, pageH:48, w:10.2, h:15.2},
-    "12.7x17.8": {margin:0.8, border:0.8, bottom:1.8, pageW:32, pageH:48, w:12.7, h:17.8},
-    "15.2x20.3": {margin:0.9, border:0.9, bottom:1.9, pageW:32, pageH:48, w:15.2, h:20.3},
-    "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0, pageW:32, pageH:48, w:20.3, h:25.4}
+    "6x9": {margin:0.5, border:0.5, bottom:1.5, w:6, h:9, pageW:32, pageH:48},
+    "8.9x12.7": {margin:0.6, border:0.6, bottom:1.6, w:8.9, h:12.7, pageW:32, pageH:48},
+    "10.2x15.2": {margin:0.7, border:0.7, bottom:1.7, w:10.2, h:15.2, pageW:32, pageH:48},
+    "12.7x17.8": {margin:0.8, border:0.8, bottom:1.8, w:12.7, h:17.8, pageW:32, pageH:48},
+    "15.2x20.3": {margin:0.9, border:0.9, bottom:1.9, w:15.2, h:20.3, pageW:32, pageH:48},
+    "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0, w:20.3, h:25.4, pageW:32, pageH:48}
   };
   function getLayoutConfig(){
-    // preserve original semantics: use sizeSelect.value to fetch
-    try {
-      return layoutConfig[sizeSelect && sizeSelect.value] || {margin:0.5,border:0.5,bottom:1.5, pageW:32, pageH:48, w:6, h:9};
-    } catch(e){
-      return {margin:0.5,border:0.5,bottom:1.5, pageW:32, pageH:48, w:6, h:9};
-    }
+    return layoutConfig[sizeSelect && sizeSelect.value] || {margin:0.5,border:0.5,bottom:1.5,w:6,h:9,pageW:32,pageH:48};
   }
 
-  /* ========== Utilities ========== */
+  // Utilities
   function loadImage(src){
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve,reject)=>{
       const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = (err) => reject(err || new Error('Image load error'));
+      img.onload = ()=>resolve(img);
+      img.onerror = (e)=>reject(e || new Error('Image load error'));
       img.crossOrigin = "anonymous";
       img.src = src;
     });
   }
-
   function hexToRgb(hex){
     const m = hex && hex.match(/^#([0-9a-f]{6})$/i);
     return m ? [parseInt(m[1].substr(0,2),16), parseInt(m[1].substr(2,2),16), parseInt(m[1].substr(4,2),16)] : [0,0,0];
   }
-
-  /* calculateOptimal: returns page geometry matching original logic */
   function calculateOptimal(w,h){
     const cfg = getLayoutConfig();
-    const {margin} = cfg;
-    // use both portrait and landscape options (pageW/pageH as used earlier)
+    const margin = cfg.margin;
     const opts = [
       {pageW: cfg.pageW, pageH: cfg.pageH, w, h, orientation:'portrait'},
       {pageW: cfg.pageH, pageH: cfg.pageW, w, h, orientation:'landscape'}
@@ -238,7 +210,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     return best;
   }
 
-  /* ========== Info Keterangan ========== */
+  // Info Keterangan
   function updateKeterangan(){
     if(!infoKeterangan) return;
     if(!currentFiles.length){ infoKeterangan.textContent = ""; return; }
@@ -253,19 +225,26 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     infoKeterangan.textContent = `${currentFiles.length} foto = ${lembar} lembar (${perPage} foto / lembar)`;
   }
 
-  /* ========== Auto caption (original behavior) ========== */
-  function updateAutoCaption(){
-    if(!autoCaptionToggle || !autoCaptionToggle.checked) return;
-    if(!currentFiles.length) return;
-    if(captionInput && captionInput.dataset && captionInput.dataset.manual === "true") return;
+  // Auto caption (dynamic)
+  function updateAutoCaption(force = false){
+    if(!autoCaptionToggle) return;
+    if(!autoCaptionToggle.checked){
+      // if unchecked, remove auto caption unless user manually typed something
+      if(captionInput && (captionInput.dataset.manual !== "true" || force)){
+        captionInput.value = "";
+        captionInput.dataset.manual = "";
+      }
+      return;
+    }
+    if(currentFiles.length === 0) return;
+    if(captionInput && captionInput.dataset && captionInput.dataset.manual === "true" && !force) return;
 
     let folderName = "Folder";
     if(currentFiles[0] && currentFiles[0].webkitRelativePath){
       const parts = currentFiles[0].webkitRelativePath.split('/');
       if(parts.length > 1) folderName = parts[0];
     }
-    const parts = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-    const w = parts[0], h = parts[1];
+    const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
     const opt = calculateOptimal(w,h);
     const {margin} = getLayoutConfig();
     const cols = Math.max(1, Math.floor((opt.pageW - 2*margin) / opt.w));
@@ -275,98 +254,76 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     if(captionInput) captionInput.value = `${folderName} = ${lembar} lembar A3`;
   }
 
-  /* ========== Background image input ========== */
+  // Background image input handling
   if(bgSelect){
     bgSelect.addEventListener('change', ()=>{
       if(customColor) customColor.style.display = bgSelect.value === "custom" ? "inline-block" : "none";
       if(bgImageInput) bgImageInput.style.display = bgSelect.value === "image" ? "inline-block" : "none";
     });
   }
-
   if(bgImageInput){
     bgImageInput.addEventListener('change', (e)=>{
-      // clear previous bgImageObj
       bgImageObj = null;
       const file = e.target.files && e.target.files[0];
       if(!file) return;
       const r = new FileReader();
-      r.onload = async (ev) => {
-        try {
-          // Create image object from dataURL
-          const img = await loadImage(ev.target.result);
-          bgImageObj = img;
-        } catch(err){
-          console.error('Background image load failed', err);
-          bgImageObj = null;
-        }
+      r.onload = async (ev)=>{
+        try{ bgImageObj = await loadImage(ev.target.result); } catch(err){ bgImageObj = null; console.error('bg image load err',err); }
       };
       r.readAsDataURL(file);
     });
   }
 
-  /* ========== Create Polaroid (identical behavior) ========== */
+  // Create polaroid image
   async function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImgObjParam){
-    // preserve behavior but add small error guards
     const {border,bottom} = getLayoutConfig();
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(W * dpi);
     canvas.height = Math.round(H * dpi);
     const ctx = canvas.getContext('2d');
 
-    try {
-      if(bgOption === "image" && bgImgObjParam){
-        const bg = bgImgObjParam;
-        const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
-        const x = (canvas.width - bg.width * scale) / 2;
-        const y = (canvas.height - bg.height * scale) / 2;
-        ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
-      } else {
-        ctx.fillStyle = bgOption === "custom" ? customCol : bgOption;
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-      }
-
-      // rotate if landscape image to keep original behavior
-      let drawImg = img;
-      if(img.width > img.height){
-        const rotated = document.createElement('canvas');
-        rotated.width = img.height;
-        rotated.height = img.width;
-        const rctx = rotated.getContext('2d');
-        rctx.translate(rotated.width, 0);
-        rctx.rotate(Math.PI/2);
-        rctx.drawImage(img, 0, 0);
-        drawImg = rotated;
-      }
-
-      const photoW = canvas.width - border * 2 * dpi;
-      const photoH = canvas.height - (border + bottom) * dpi;
-      const photoX = border * dpi, photoY = border * dpi;
-      const ratio = Math.min(photoW / drawImg.width, photoH / drawImg.height);
-      const drawW = drawImg.width * ratio, drawH = drawImg.height * ratio;
-      const offsetX = photoX + (photoW - drawW) / 2, offsetY = photoY + (photoH - drawH) / 2;
-      ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
-    } catch(err){
-      console.error('createPolaroid error', err);
+    if(bgOption === "image" && bgImgObjParam){
+      const bg = bgImgObjParam;
+      const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
+      const x = (canvas.width - bg.width * scale) / 2;
+      const y = (canvas.height - bg.height * scale) / 2;
+      ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
+    } else {
+      ctx.fillStyle = bgOption === "custom" ? customCol : bgOption;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
     }
+
+    let drawImg = img;
+    if(img.width > img.height){
+      const rotated = document.createElement('canvas');
+      rotated.width = img.height;
+      rotated.height = img.width;
+      const rctx = rotated.getContext('2d');
+      rctx.translate(rotated.width, 0);
+      rctx.rotate(Math.PI/2);
+      rctx.drawImage(img, 0, 0);
+      drawImg = rotated;
+    }
+
+    const photoW = canvas.width - border * 2 * dpi;
+    const photoH = canvas.height - (border + bottom) * dpi;
+    const photoX = border * dpi, photoY = border * dpi;
+    const ratio = Math.min(photoW / drawImg.width, photoH / drawImg.height);
+    const drawW = drawImg.width * ratio, drawH = drawImg.height * ratio;
+    const offsetX = photoX + (photoW - drawW) / 2, offsetY = photoY + (photoH - drawH) / 2;
+    ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
 
     return canvas.toDataURL("image/jpeg", 0.92);
   }
 
-  /* ========== Event wiring: size change updates info & caption ========== */
-  if(captionInput){
-    captionInput.addEventListener('input', ()=>{ captionInput.dataset.manual = "true"; });
-  }
-  if(sizeSelect){
-    sizeSelect.addEventListener('change', ()=>{ updateKeterangan(); updateAutoCaption(); });
-  }
-  if(autoCaptionToggle){
-    autoCaptionToggle.addEventListener('change', updateAutoCaption);
-  }
+  // Event bindings
+  if(captionInput){ captionInput.addEventListener('input', ()=>{ captionInput.dataset.manual = "true"; }); }
+  if(sizeSelect){ sizeSelect.addEventListener('change', ()=>{ updateKeterangan(); updateAutoCaption(); }); }
+  if(autoCaptionToggle){ autoCaptionToggle.addEventListener('change', ()=>{ updateAutoCaption(true); }); }
 
-  /* ========== UPLOAD: stable preview rendering (sequential, immediate) ========== */
+  // Upload & preview (sequential)
   if(upload && previewDiv){
     upload.addEventListener('change', async ()=>{
-      // convert FileList to array (preserve order)
       currentFiles = Array.from(upload.files || []);
       previewDiv.innerHTML = "";
       if(captionInput) captionInput.dataset.manual = "";
@@ -379,16 +336,13 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
         currentColor = autoColors[colorIndex];
       }
 
-      // Render sequentially so order and count are stable for all browsers
-      for(let i = 0; i < currentFiles.length; i++){
+      for(let i=0; i<currentFiles.length; i++){
         const file = currentFiles[i];
         let objectUrl = null;
         try {
           objectUrl = URL.createObjectURL(file);
           const img = await loadImage(objectUrl);
-          const parts = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-          const w = parts[0], h = parts[1];
-          // create thumbnail using same visual (polaroid) but at low dpi to save mem
+          const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
           const data = await createPolaroid(img, w, h, 72, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
           const thumb = document.createElement('img');
           thumb.src = data;
@@ -397,42 +351,32 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           previewDiv.appendChild(thumb);
         } catch(err){
           console.error("Preview load failed:", file && file.name, err);
-          // continue with rest; do not stop entire loop
         } finally {
-          // revoke object URL to prevent memory leaks
           if(objectUrl) URL.revokeObjectURL(objectUrl);
         }
       }
-
-      // Ensure info shows immediately in original format
       updateKeterangan();
     });
   }
 
-  /* ========== SAVE PDF: accurate progress bar (sequential per file) ========== */
+  // Save PDF (sequential with progress)
   if(saveBtn){
     saveBtn.addEventListener('click', async ()=>{
-      try {
+      try{
         if(!currentFiles.length) return alert("Upload foto dulu!");
-        const parts = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-        const w = parts[0], h = parts[1];
+        if(typeof jsPDF === 'undefined') return alert('Library jsPDF tidak tersedia.');
+
+        const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
         const {margin} = getLayoutConfig();
         const opt = calculateOptimal(w,h);
-
-        // If jsPDF not available, warn and exit gracefully
-        if(typeof jsPDF === 'undefined') {
-          console.error('jsPDF not found on window.jspdf');
-          return alert('Library jsPDF tidak tersedia.');
-        }
-
         const pdf = new jsPDF({unit:'cm', format:[opt.pageW, opt.pageH], orientation: opt.orientation});
         const cols = Math.max(1, Math.floor((opt.pageW - 2*margin) / opt.w));
         const rows = Math.max(1, Math.floor((opt.pageH - 2*margin) / opt.h));
         const perPage = Math.max(1, cols * rows);
 
         if(progressContainer) progressContainer.style.display = "block";
-        if(progressBar) { progressBar.style.width = "0%"; }
-        if(progressText) { progressText.textContent = "0%"; }
+        if(progressBar) progressBar.style.width = "0%";
+        if(progressText) progressText.textContent = "0%";
 
         let done = 0;
         const total = currentFiles.length;
@@ -455,7 +399,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             pdf.rect(opt.pageW-margin,0,margin,opt.pageH,"F");
           }
 
-          // crop marks & grid lines (same as before)
+          // crop marks & grid lines
           pdf.setLineWidth(0.02);
           for(let c=0;c<=cols;c++){
             const x = left + c * opt.w;
@@ -471,7 +415,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           pdf.setFontSize(14);
           pdf.text(finalCaption, opt.pageW/2, top + totalH + 1.2, {align: "center"});
 
-          // process each file sequentially to ensure deterministic progress
+          // process files sequentially to keep progress deterministic
           for(let idx=0; idx<pageFiles.length; idx++){
             const file = pageFiles[idx];
             let objectUrl = null;
@@ -494,24 +438,23 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           }
         }
 
-        // small delay so UI shows 100% smoothly
+        // small delay to show 100%
         setTimeout(()=>{
           pdf.save(safeCaption + '.pdf');
           if(progressContainer) progressContainer.style.display = "none";
-          if(progressBar) { progressBar.style.width = "0%"; }
-          if(progressText) { progressText.textContent = "0%"; }
-          // refresh info keterangan after save (keadaan tidak berubah)
+          if(progressBar) progressBar.style.width = "0%";
+          if(progressText) progressText.textContent = "0%";
           updateKeterangan();
         }, 120);
 
-      } catch(err){
-        console.error('saveBtn click handler error', err);
-        alert('Terjadi kesalahan saat menyimpan PDF. Periksa console untuk detail.');
+      }catch(err){
+        console.error('save error', err);
+        alert('Terjadi kesalahan saat menyimpan PDF. Cek console.');
       }
     });
   }
 
-  /* ========== Reset ========== */
+  // Reset
   if(resetBtn){
     resetBtn.addEventListener('click', ()=>{
       currentFiles = [];
@@ -525,29 +468,24 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       bgImageObj = null;
       updateKeterangan();
       if(progressContainer) progressContainer.style.display = "none";
-      if(progressBar) { progressBar.style.width = "0%"; }
-      if(progressText) { progressText.textContent = "0%"; }
-      // attempt to clear bgImageInput file input too
+      if(progressBar) progressBar.style.width = "0%";
+      if(progressText) progressText.textContent = "0%";
       if(bgImageInput) bgImageInput.value = "";
     });
   }
 
-  /* ========== Dark mode persistence ========== */
+  // Dark mode
   window.addEventListener('DOMContentLoaded', ()=>{
-    try {
-      if(localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
-    } catch(e){
-      // localStorage might be blocked; ignore silently
-    }
+    try{ if(localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode'); }catch(e){}
   });
   if(darkToggle){
     darkToggle.addEventListener('click', ()=>{
       const isDark = document.body.classList.toggle('dark-mode');
-      try { localStorage.setItem('darkMode', isDark); } catch(e){ /* ignore storage errors */ }
+      try{ localStorage.setItem('darkMode', isDark); }catch(e){}
     });
   }
 
-  /* ========== Modal zoom (keep original behavior) ========== */
+  // Modal zoom
   if(previewDiv && imgModal && modalImg){
     previewDiv.addEventListener('click', (e)=>{
       if(e.target && e.target.tagName === 'IMG'){
@@ -556,19 +494,16 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
         imgModal.style.display = 'flex';
       }
     });
-    imgModal.addEventListener('click', e=>{
-      if(e.target === imgModal) imgModal.style.display = 'none';
-    });
+    imgModal.addEventListener('click', (e)=>{ if(e.target === imgModal) imgModal.style.display = 'none'; });
   }
 
-  /* ========== ALT tooltip & shortcuts (restore original behavior) ========== */
+  // ALT tooltips & shortcuts
   let altPressed = false, tooltipTimeouts = [];
   const shortcutMap = [
     {key:'s', el: saveBtn, label:'S'},
     {key:'r', el: resetBtn, label:'R'},
     {key:'m', el: darkToggle, label:'M'}
   ];
-  // create tooltip elements (use same class .altTooltip so CSS unchanged)
   shortcutMap.forEach(item=>{
     if(!item.el) return;
     const tip = document.createElement('div');
@@ -583,7 +518,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   function showTooltip(item){
     if(!item || !item.el || !item.tooltip) return;
     const rect = item.el.getBoundingClientRect();
-    // ensure tooltip has been measured (offsetWidth available)
     item.tooltip.style.top = (window.scrollY + rect.top - 28) + 'px';
     item.tooltip.style.left = (window.scrollX + rect.left + rect.width/2 - item.tooltip.offsetWidth/2) + 'px';
     item.tooltip.style.opacity = '1';
@@ -601,7 +535,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   });
   document.addEventListener('keyup', (e)=>{ if(e.key === 'Alt'){ altPressed = false; hideAllTooltips(); } });
 
-  // End of module
 })();
 </script>
 </body>
