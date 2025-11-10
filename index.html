@@ -5,6 +5,7 @@
 <title>Layout Polaroid Center</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
+/* === Gaya asli dipertahankan === */
 body {
   margin:20px;
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -46,6 +47,7 @@ button:hover { background:linear-gradient(90deg,#00f2fe,#4facfe); }
 #progressBar { width:0%; height:100%; background:linear-gradient(90deg,#4facfe,#00f2fe); transition:width 0.3s; }
 #progressText { position:absolute; width:100%; top:0; left:0; text-align:center; font-size:14px; line-height:25px; color:#333; font-weight:bold; transition: color 0.4s ease; }
 
+#folderInfo { font-weight:bold; font-size:14px; color:#444; margin-bottom:4px; min-height:18px; }
 #infoKeterangan { margin:5px 0 10px; font-size:14px; font-weight:bold; color:#222; transition: color 0.4s ease; }
 #appVersion { width:100%; text-align:right; font-size:12px; color:#555; margin-top:5px; font-style:italic; transition: color 0.4s ease; }
 
@@ -61,7 +63,7 @@ body.dark-mode input, body.dark-mode select, body.dark-mode button, body.dark-mo
 body.dark-mode #preview { background:#222; }
 body.dark-mode #progressContainer { background:#333; }
 body.dark-mode #progressText { color:#ffeb3b; }
-body.dark-mode #infoKeterangan { color:#ffeb3b; }
+body.dark-mode #infoKeterangan, body.dark-mode #folderInfo { color:#ffeb3b; }
 body.dark-mode #appVersion { color:#aaa; }
 body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
@@ -75,20 +77,10 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   max-width:90%; max-height:90%; border-radius:10px;
   box-shadow:0 0 20px rgba(255,255,255,0.3);
 }
-
-/* Tooltip Alt */
 .altTooltip {
-  position:absolute;
-  background:rgba(0,0,0,0.8);
-  color:white;
-  padding:3px 6px;
-  border-radius:4px;
-  font-size:12px;
-  font-family:sans-serif;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity 0.3s;
-  z-index:10000;
+  position:absolute; background:rgba(0,0,0,0.8); color:white;
+  padding:3px 6px; border-radius:4px; font-size:12px;
+  pointer-events:none; opacity:0; transition:opacity 0.3s; z-index:10000;
 }
 </style>
 </head>
@@ -124,11 +116,15 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.5.6</div>
+<div id="appVersion">Versi 1.5.8</div>
+
 <div id="progressContainer">
   <div id="progressBar"></div>
   <div id="progressText">0%</div>
 </div>
+
+<!-- Folder info (baru) -->
+<div id="folderInfo"></div>
 <div id="infoKeterangan"></div>
 <div id="preview"></div>
 
@@ -137,10 +133,12 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-/* Full working script: all buttons and features included, with dynamic auto-caption */
+/* Finalized script: full features + folder info + robust auto-caption (non-overwriting manual)
+   + FIX: sizeSelect change now triggers updateKeterangan & updateAutoCaption */
 (function(){
   'use strict';
   const { jsPDF } = window.jspdf || {};
+
   // Elements
   const upload = document.getElementById('upload');
   const sizeSelect = document.getElementById('sizeSelect');
@@ -155,6 +153,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   const progressBar = document.getElementById('progressBar');
   const progressText = document.getElementById('progressText');
   const infoKeterangan = document.getElementById('infoKeterangan');
+  const folderInfo = document.getElementById('folderInfo');
   const marginColorToggle = document.getElementById('marginColorToggle');
   const darkToggle = document.getElementById('darkToggle');
   const autoCaptionToggle = document.getElementById('autoCaptionToggle');
@@ -175,11 +174,9 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     "15.2x20.3": {margin:0.9, border:0.9, bottom:1.9, w:15.2, h:20.3, pageW:32, pageH:48},
     "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0, w:20.3, h:25.4, pageW:32, pageH:48}
   };
-  function getLayoutConfig(){
-    return layoutConfig[sizeSelect && sizeSelect.value] || {margin:0.5,border:0.5,bottom:1.5,w:6,h:9,pageW:32,pageH:48};
-  }
+  function getLayoutConfig(){ return layoutConfig[sizeSelect && sizeSelect.value] || {margin:0.5,border:0.5,bottom:1.5,w:6,h:9,pageW:32,pageH:48}; }
 
-  // Utilities
+  // Helpers
   function loadImage(src){
     return new Promise((resolve,reject)=>{
       const img = new Image();
@@ -210,7 +207,20 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     return best;
   }
 
-  // Info Keterangan
+  // Folder info
+  function updateFolderInfo(){
+    if(!folderInfo) return;
+    if(!currentFiles.length){ folderInfo.textContent = ""; return; }
+    if(currentFiles[0] && currentFiles[0].webkitRelativePath){
+      const parts = currentFiles[0].webkitRelativePath.split('/');
+      if(parts.length > 1) folderInfo.textContent = `📁 Folder: ${parts[0]}`;
+      else folderInfo.textContent = "";
+    } else {
+      folderInfo.textContent = "";
+    }
+  }
+
+  // Info keterangan
   function updateKeterangan(){
     if(!infoKeterangan) return;
     if(!currentFiles.length){ infoKeterangan.textContent = ""; return; }
@@ -220,16 +230,35 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     const {margin} = getLayoutConfig();
     const cols = Math.max(1, Math.floor((opt.pageW - 2*margin) / opt.w));
     const rows = Math.max(1, Math.floor((opt.pageH - 2*margin) / opt.h));
-    const perPage = cols * rows || 1;
+    const perPage = Math.max(1, cols * rows);
     const lembar = Math.ceil(currentFiles.length / perPage);
     infoKeterangan.textContent = `${currentFiles.length} foto = ${lembar} lembar (${perPage} foto / lembar)`;
   }
 
-  // Auto caption (dynamic)
-  function updateAutoCaption(force = false){
+  // Auto caption (dynamic & non-overwriting manual)
+  // captionInput.dataset.manual === "true" => user edited manually
+  if(captionInput){
+    captionInput.addEventListener('input', ()=>{ captionInput.dataset.manual = "true"; });
+  }
+  if(autoCaptionToggle){
+    autoCaptionToggle.addEventListener('change', ()=>{
+      if(autoCaptionToggle.checked){
+        // enable: allow auto to populate (clear manual flag)
+        if(captionInput) captionInput.dataset.manual = "";
+        updateAutoCaption(true);
+      } else {
+        // disable: clear generated caption only if not manual
+        if(captionInput && captionInput.dataset.manual !== "true"){
+          captionInput.value = "";
+          captionInput.dataset.manual = "";
+        }
+      }
+    });
+  }
+
+  function updateAutoCaption(force=false){
     if(!autoCaptionToggle) return;
     if(!autoCaptionToggle.checked){
-      // if unchecked, remove auto caption unless user manually typed something
       if(captionInput && (captionInput.dataset.manual !== "true" || force)){
         captionInput.value = "";
         captionInput.dataset.manual = "";
@@ -254,11 +283,19 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     if(captionInput) captionInput.value = `${folderName} = ${lembar} lembar A3`;
   }
 
+  // Bind sizeSelect change so info updates when user picks different size
+  if(sizeSelect){
+    sizeSelect.addEventListener('change', ()=>{
+      updateKeterangan();
+      updateAutoCaption();
+    });
+  }
+
   // Background image input handling
   if(bgSelect){
     bgSelect.addEventListener('change', ()=>{
-      if(customColor) customColor.style.display = bgSelect.value === "custom" ? "inline-block" : "none";
-      if(bgImageInput) bgImageInput.style.display = bgSelect.value === "image" ? "inline-block" : "none";
+      customColor.style.display = bgSelect.value === "custom" ? "inline-block" : "none";
+      bgImageInput.style.display = bgSelect.value === "image" ? "inline-block" : "none";
     });
   }
   if(bgImageInput){
@@ -274,7 +311,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // Create polaroid image
+  // Create polaroid image (same visual as before)
   async function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImgObjParam){
     const {border,bottom} = getLayoutConfig();
     const canvas = document.createElement('canvas');
@@ -316,19 +353,16 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     return canvas.toDataURL("image/jpeg", 0.92);
   }
 
-  // Event bindings
-  if(captionInput){ captionInput.addEventListener('input', ()=>{ captionInput.dataset.manual = "true"; }); }
-  if(sizeSelect){ sizeSelect.addEventListener('change', ()=>{ updateKeterangan(); updateAutoCaption(); }); }
-  if(autoCaptionToggle){ autoCaptionToggle.addEventListener('change', ()=>{ updateAutoCaption(true); }); }
-
-  // Upload & preview (sequential)
+  // Upload & preview (sequential). Caption manual persistence preserved.
   if(upload && previewDiv){
     upload.addEventListener('change', async ()=>{
+      // get files, maintain order
       currentFiles = Array.from(upload.files || []);
       previewDiv.innerHTML = "";
-      if(captionInput) captionInput.dataset.manual = "";
-
+      // update folder info and counts
+      updateFolderInfo();
       updateKeterangan();
+      // update auto caption only if enabled and not manual
       updateAutoCaption();
 
       if(currentFiles.length > 0){
@@ -336,10 +370,11 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
         currentColor = autoColors[colorIndex];
       }
 
+      // sequentially create previews (low-dpi polaroid)
       for(let i=0; i<currentFiles.length; i++){
         const file = currentFiles[i];
         let objectUrl = null;
-        try {
+        try{
           objectUrl = URL.createObjectURL(file);
           const img = await loadImage(objectUrl);
           const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
@@ -349,9 +384,9 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           thumb.title = file.name;
           thumb.alt = file.name || "foto";
           previewDiv.appendChild(thumb);
-        } catch(err){
+        }catch(err){
           console.error("Preview load failed:", file && file.name, err);
-        } finally {
+        }finally{
           if(objectUrl) URL.revokeObjectURL(objectUrl);
         }
       }
@@ -415,20 +450,20 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           pdf.setFontSize(14);
           pdf.text(finalCaption, opt.pageW/2, top + totalH + 1.2, {align: "center"});
 
-          // process files sequentially to keep progress deterministic
+          // sequentially process each image for this page
           for(let idx=0; idx<pageFiles.length; idx++){
             const file = pageFiles[idx];
             let objectUrl = null;
-            try {
+            try{
               objectUrl = URL.createObjectURL(file);
               const img = await loadImage(objectUrl);
               const data = await createPolaroid(img, opt.w, opt.h, 200, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
               const col = idx % cols;
               const row = Math.floor(idx / cols);
               pdf.addImage(data, 'JPEG', left + col * opt.w, top + row * opt.h, opt.w, opt.h);
-            } catch(err){
+            }catch(err){
               console.error("Failed to render PDF image:", file && file.name, err);
-            } finally {
+            }finally{
               if(objectUrl) URL.revokeObjectURL(objectUrl);
             }
             done++;
@@ -438,7 +473,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           }
         }
 
-        // small delay to show 100%
+        // show 100% then save
         setTimeout(()=>{
           pdf.save(safeCaption + '.pdf');
           if(progressContainer) progressContainer.style.display = "none";
@@ -466,15 +501,17 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       if(marginColorToggle) marginColorToggle.checked = true;
       if(autoCaptionToggle) autoCaptionToggle.checked = false;
       bgImageObj = null;
+      if(bgImageInput) bgImageInput.value = "";
+      // clear folder info & keterangan & progress
+      if(folderInfo) folderInfo.textContent = "";
       updateKeterangan();
       if(progressContainer) progressContainer.style.display = "none";
       if(progressBar) progressBar.style.width = "0%";
       if(progressText) progressText.textContent = "0%";
-      if(bgImageInput) bgImageInput.value = "";
     });
   }
 
-  // Dark mode
+  // Dark mode persistence
   window.addEventListener('DOMContentLoaded', ()=>{
     try{ if(localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode'); }catch(e){}
   });
