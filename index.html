@@ -197,8 +197,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   </button>
 
   <!-- Hidden inputs: one for folder (webkitdirectory) and one for files -->
-  <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*">
-  <input type="file" id="uploadFiles" style="display:none" multiple accept="image/*">
+  <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.HEIC">
+<input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.HEIC">
 
   <!-- Existing controls -->
   <select id="sizeSelect">
@@ -233,7 +233,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.6.0</div>
+<div id="appVersion">Versi 1.6.2</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -248,6 +248,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 <div id="imgModal"><img id="modalImg" src="" alt="Preview Besar"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
 <script>
 /* Bagian Script lengkap untuk layout-polaroid-v2.html
    - Upload Folder / Upload File (dua tombol)
@@ -305,7 +306,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       const img = new Image();
       img.onload = ()=>resolve(img);
       img.onerror = (e)=>reject(e || new Error('Image load error'));
-      img.crossOrigin = "anonymous";
+      // img.crossOrigin dihapus agar aman untuk file lokal
       img.src = src;
     });
   }
@@ -480,9 +481,46 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // Render preview for provided array of files
+  // Render preview dengan indikator progress bar saat upload/konversi file
   async function renderPreviewForFiles(filesArr){
-    currentFiles = filesArr.slice(); // copy
+    currentFiles = []; // Reset array lokal
+    
+    // Tampilkan progress bar saat mulai memproses file
+    if(progressContainer) progressContainer.style.display = "block";
+    if(progressBar) progressBar.style.width = "0%";
+    if(progressText) progressText.textContent = "Menyiapkan file... (0%)";
+
+    const totalFiles = filesArr.length;
+
+    // Filter dan konversi HEIC jika ada (dengan update progress)
+    for(let f = 0; f < totalFiles; f++) {
+      let file = filesArr[f];
+      let fileName = file.name ? file.name.toLowerCase() : '';
+      
+      if(fileName.endsWith('.heic') || file.type === 'image/heic' || file.type === 'image/heif') {
+        try {
+          let convertedBlob = await heic2any({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.7
+          });
+          if(Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
+          
+          file = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+            type: "image/jpeg"
+          });
+        } catch(err) {
+          console.error("Gagal konversi HEIC:", file.name, err);
+        }
+      }
+      currentFiles.push(file);
+
+      // Update teks progress saat tahap konversi/pengecekan file
+      let percentConv = Math.round(((f + 1) / totalFiles) * 40); // 40% alokasi untuk tahap awal
+      if(progressBar) progressBar.style.width = percentConv + '%';
+      if(progressText) progressText.textContent = `Memproses file ${f + 1} dari ${totalFiles} (${percentConv}%)`;
+    }
+
     previewDiv.innerHTML = "";
     updateFolderName();
     updateKeterangan();
@@ -493,14 +531,17 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       currentColor = autoColors[colorIndex];
     }
 
-    for(let i=0;i<currentFiles.length;i++){
+    // Render preview polaroid satu per satu sambil melanjutkan progress bar (40% - 100%)
+    for(let i=0; i<currentFiles.length; i++){
       const file = currentFiles[i];
       let objectUrl = null;
       try{
         objectUrl = URL.createObjectURL(file);
         const img = await loadImage(objectUrl);
         const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-        const data = await createPolaroid(img, w, h, 72, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
+        
+        const data = await createPolaroid(img, w, h, 96, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
+        
         const thumb = document.createElement('img');
         thumb.src = data;
         thumb.title = file.name;
@@ -511,10 +552,22 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       }finally{
         if(objectUrl) URL.revokeObjectURL(objectUrl);
       }
-    }
-    updateKeterangan();
-  }
 
+      // Hitung persentase progress untuk render preview
+      let percentRender = 40 + Math.round(((i + 1) / currentFiles.length) * 60);
+      if(progressBar) progressBar.style.width = percentRender + '%';
+      if(progressText) progressText.textContent = `Membuat preview ${i + 1} dari ${currentFiles.length} (${percentRender}%)`;
+    }
+
+    updateKeterangan();
+
+    // Selesai: Sembunyikan progress bar setelah jeda singkat
+    setTimeout(() => {
+      if(progressContainer) progressContainer.style.display = "none";
+      if(progressBar) progressBar.style.width = "0%";
+      if(progressText) progressText.textContent = "0%";
+    }, 400);
+  }
   // Handle uploadFolderBtn click -> open hidden input
   if(uploadFolderBtn && uploadFolder){
     uploadFolderBtn.addEventListener('click', (e)=>{
@@ -610,10 +663,17 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             try{
               objectUrl = URL.createObjectURL(file);
               const img = await loadImage(objectUrl);
-              const data = await createPolaroid(img, opt.w, opt.h, 200, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
+              // Ubah angka 200 menjadi 118 (118 dot/cm setara dengan standar cetak 300 DPI, sudah sangat jernih dan ringan di RAM)
+              const data = await createPolaroid(img, opt.w, opt.h, 118, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
+              
               const col = idx % cols;
               const row = Math.floor(idx / cols);
-              pdf.addImage(data, 'JPEG', left + col * opt.w, top + row * opt.h, opt.w, opt.h);
+              
+              // Buat ID unik untuk gambar agar jsPDF bisa me-manage memori dengan baik
+              const imgAlias = 'img_' + Date.now() + '_' + idx;
+              
+              // Tambahkan parameter undefined, lalu 'FAST' untuk menghidupkan kompresi PDF
+              pdf.addImage(data, 'JPEG', left + col * opt.w, top + row * opt.h, opt.w, opt.h, imgAlias, 'FAST');
             }catch(err){
               console.error("Failed to render PDF image:", file && file.name, err);
             }finally{
