@@ -197,8 +197,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   </button>
 
   <!-- Hidden inputs: one for folder (webkitdirectory) and one for files -->
-  <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.HEIC">
-<input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.HEIC">
+  <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
+<input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
 
   <!-- Existing controls -->
   <select id="sizeSelect">
@@ -233,7 +233,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.6.2</div>
+<div id="appVersion">Versi 1.6.3</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -481,7 +481,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // Render preview dengan indikator progress bar saat upload/konversi file
+  // Render preview untuk provided array of files (dengan dukungan HEIC & HEIF lengkap)
   async function renderPreviewForFiles(filesArr){
     currentFiles = []; // Reset array lokal
     
@@ -492,12 +492,18 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
     const totalFiles = filesArr.length;
 
-    // Filter dan konversi HEIC jika ada (dengan update progress)
+    // Filter dan konversi HEIC / HEIF jika ada
     for(let f = 0; f < totalFiles; f++) {
       let file = filesArr[f];
       let fileName = file.name ? file.name.toLowerCase() : '';
       
-      if(fileName.endsWith('.heic') || file.type === 'image/heic' || file.type === 'image/heif') {
+      // Deteksi ekstensi .heic, .heif, atau tipe mime terkait
+      const isHeicOrHeif = fileName.endsWith('.heic') || 
+                           fileName.endsWith('.heif') || 
+                           file.type === 'image/heic' || 
+                           file.type === 'image/heif';
+
+      if(isHeicOrHeif) {
         try {
           let convertedBlob = await heic2any({
             blob: file,
@@ -506,17 +512,18 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           });
           if(Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
           
-          file = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+          // Ubah nama file target menjadi .jpg agar mulus dibaca canvas & jsPDF
+          const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+          file = new File([convertedBlob], newName, {
             type: "image/jpeg"
           });
         } catch(err) {
-          console.error("Gagal konversi HEIC:", file.name, err);
+          console.error("Gagal konversi HEIF/HEIC:", file.name, err);
         }
       }
       currentFiles.push(file);
 
-      // Update teks progress saat tahap konversi/pengecekan file
-      let percentConv = Math.round(((f + 1) / totalFiles) * 40); // 40% alokasi untuk tahap awal
+      let percentConv = Math.round(((f + 1) / totalFiles) * 40);
       if(progressBar) progressBar.style.width = percentConv + '%';
       if(progressText) progressText.textContent = `Memproses file ${f + 1} dari ${totalFiles} (${percentConv}%)`;
     }
@@ -531,7 +538,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       currentColor = autoColors[colorIndex];
     }
 
-    // Render preview polaroid satu per satu sambil melanjutkan progress bar (40% - 100%)
     for(let i=0; i<currentFiles.length; i++){
       const file = currentFiles[i];
       let objectUrl = null;
@@ -553,7 +559,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
         if(objectUrl) URL.revokeObjectURL(objectUrl);
       }
 
-      // Hitung persentase progress untuk render preview
       let percentRender = 40 + Math.round(((i + 1) / currentFiles.length) * 60);
       if(progressBar) progressBar.style.width = percentRender + '%';
       if(progressText) progressText.textContent = `Membuat preview ${i + 1} dari ${currentFiles.length} (${percentRender}%)`;
@@ -561,7 +566,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
     updateKeterangan();
 
-    // Selesai: Sembunyikan progress bar setelah jeda singkat
     setTimeout(() => {
       if(progressContainer) progressContainer.style.display = "none";
       if(progressBar) progressBar.style.width = "0%";
