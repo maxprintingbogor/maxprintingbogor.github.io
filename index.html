@@ -233,7 +233,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.6.3</div>
+<div id="appVersion">Versi 1.6.4</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -604,12 +604,15 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // Save PDF (same logic as earlier)
+  // Save PDF (Background Penuh Akurat + Garis Potong Otomatis)
   if(saveBtn){
     saveBtn.addEventListener('click', async ()=>{
       try{
         if(!currentFiles.length) return alert("Upload foto dulu!");
         if(typeof jsPDF === 'undefined') return alert('Library jsPDF tidak tersedia.');
+
+        // Kunci tombol saat proses
+        saveBtn.disabled = true;
 
         const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
         const {margin} = getLayoutConfig();
@@ -635,7 +638,43 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           const left = margin + (opt.pageW - 2*margin - totalW)/2;
           const top = margin + (opt.pageH - 2*margin - totalH)/2;
 
-          // margin color
+          // Variabel untuk menyimpan RGB akurat (default putih)
+          let pageBgRgb = [255, 255, 255]; 
+
+          // =========================================================
+          // 1. KODE BACKGROUND MELUAS (AKURAT SESUAI PREVIEW)
+          // =========================================================
+          const bgOpt = bgSelect ? bgSelect.value : "white";
+          if(bgOpt !== "image") {
+            let colorStr = (bgOpt === "custom" && customColor) ? customColor.value : bgOpt;
+            
+            // Perbaikan khusus jika value-nya "cream" (karena bukan warna standar web)
+            if(colorStr.toLowerCase() === "cream") colorStr = "#FFFDD0"; 
+
+            if (colorStr.startsWith('#')) {
+              // Jika formatnya sudah HEX (#123456)
+              pageBgRgb = hexToRgb(colorStr);
+            } else {
+              // Menarik nilai RGB asli persis seperti tampilan di browser
+              const tempDiv = document.createElement('div');
+              tempDiv.style.color = colorStr;
+              document.body.appendChild(tempDiv);
+              const computed = window.getComputedStyle(tempDiv).color;
+              document.body.removeChild(tempDiv);
+              const match = computed.match(/\d+/g);
+              if (match && match.length >= 3) {
+                pageBgRgb = [parseInt(match[0]), parseInt(match[1]), parseInt(match[2])];
+              }
+            }
+
+            // Terapkan warna ke halaman PDF
+            pdf.setFillColor(pageBgRgb[0], pageBgRgb[1], pageBgRgb[2]);
+            pdf.rect(0, 0, opt.pageW, opt.pageH, "F"); 
+          }
+
+          // =========================================================
+          // 2. MARGIN COLOR (Ditumpuk di atas background jika dicentang)
+          // =========================================================
           if(marginColorToggle && marginColorToggle.checked){
             const [r,g,b] = hexToRgb(currentColor);
             pdf.setFillColor(r,g,b);
@@ -644,8 +683,23 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             pdf.rect(opt.pageW-margin,0,margin,opt.pageH,"F");
           }
 
-          // crop marks & grid lines
+          // =========================================================
+          // 3. CROP MARKS & GRID LINES (Otomatis menyesuaikan kontras)
+          // =========================================================
           pdf.setLineWidth(0.02);
+          
+          // Cek tingkat kecerahan warna background (Rumus standar brightness)
+          const brightness = (pageBgRgb[0] * 299 + pageBgRgb[1] * 587 + pageBgRgb[2] * 114) / 1000;
+          
+          // Jika background gelap, garis dan teks jadi terang/abu-abu. Jika terang, jadi hitam.
+          if (brightness < 128 || (marginColorToggle && marginColorToggle.checked && currentColor === "#000000")) {
+            pdf.setDrawColor(200, 200, 200); 
+            pdf.setTextColor(255, 255, 255); 
+          } else {
+            pdf.setDrawColor(0, 0, 0); 
+            pdf.setTextColor(0, 0, 0); 
+          }
+
           for(let c=0;c<=cols;c++){
             const x = left + c * opt.w;
             pdf.line(x, top - 0.7, x, top - 0.2);
@@ -659,24 +713,23 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
           pdf.setFontSize(14);
           pdf.text(finalCaption, opt.pageW/2, top + totalH + 1.2, {align: "center"});
+          pdf.setTextColor(0, 0, 0); // Kembalikan ke hitam untuk jaga-jaga
 
-          // process images sequentially
+          // =========================================================
+          // 4. PROCESS IMAGES SEQUENTIALLY
+          // =========================================================
           for(let idx=0; idx<pageFiles.length; idx++){
             const file = pageFiles[idx];
             let objectUrl = null;
             try{
               objectUrl = URL.createObjectURL(file);
               const img = await loadImage(objectUrl);
-              // Ubah angka 200 menjadi 118 (118 dot/cm setara dengan standar cetak 300 DPI, sudah sangat jernih dan ringan di RAM)
               const data = await createPolaroid(img, opt.w, opt.h, 118, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
               
               const col = idx % cols;
               const row = Math.floor(idx / cols);
-              
-              // Buat ID unik untuk gambar agar jsPDF bisa me-manage memori dengan baik
               const imgAlias = 'img_' + Date.now() + '_' + idx;
               
-              // Tambahkan parameter undefined, lalu 'FAST' untuk menghidupkan kompresi PDF
               pdf.addImage(data, 'JPEG', left + col * opt.w, top + row * opt.h, opt.w, opt.h, imgAlias, 'FAST');
             }catch(err){
               console.error("Failed to render PDF image:", file && file.name, err);
@@ -690,18 +743,19 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           }
         }
 
-        // show 100% then save
         setTimeout(()=>{
           pdf.save(safeCaption + '.pdf');
           if(progressContainer) progressContainer.style.display = "none";
           if(progressBar) progressBar.style.width = "0%";
           if(progressText) progressText.textContent = "0%";
           updateKeterangan();
+          saveBtn.disabled = false; // Buka kunci tombol
         }, 120);
 
       }catch(err){
         console.error('save error', err);
         alert('Terjadi kesalahan saat menyimpan PDF. Cek console.');
+        saveBtn.disabled = false;
       }
     });
   }
