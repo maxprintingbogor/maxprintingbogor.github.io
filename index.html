@@ -200,7 +200,14 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
 <input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
 
-  <!-- Existing controls -->
+<!-- Pilihan Mode Tampilan Foto -->
+<label for="styleSelect">Mode Cetak:</label>
+<select id="styleSelect">
+  <option value="polaroid">Polaroid (Dengan Bingkai)</option>
+  <option value="full">Full Gambar (Tanpa Bingkai)</option>
+</select>
+  
+<!-- Existing controls -->
   <select id="sizeSelect">
     <option value="6x9">2R (6x9 cm)</option>
     <option value="8.9x12.7">3R (8.9x12.7 cm)</option>
@@ -233,7 +240,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.6.4</div>
+<div id="appVersion">Versi 1.6.5</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -331,27 +338,20 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     return best;
   }
 
-  // Create polaroid image
+  // Create polaroid / full image (Fix: Warna Background Polaroid Akurat)
   async function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImgObjParam){
-    const {border,bottom} = getLayoutConfig();
+    const styleSelect = document.getElementById('styleSelect');
+    const isFullImage = styleSelect && styleSelect.value === "full";
+
     const canvas = document.createElement('canvas');
-    canvas.width = Math.round(W * dpi);
-    canvas.height = Math.round(H * dpi);
+    const bleed = 0.3; // Extra bleed agar warna meluber pas batas garis potong
+    canvas.width = Math.round((W + bleed * 2) * dpi);
+    canvas.height = Math.round((H + bleed * 2) * dpi);
     const ctx = canvas.getContext('2d');
 
-    if(bgOption === "image" && bgImgObjParam){
-      const bg = bgImgObjParam;
-      const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
-      const x = (canvas.width - bg.width * scale) / 2;
-      const y = (canvas.height - bg.height * scale) / 2;
-      ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
-    } else {
-      ctx.fillStyle = bgOption === "custom" ? customCol : bgOption;
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-    }
-
+    // Rotasi otomatis jika foto lanskap tapi kanvas potret
     let drawImg = img;
-    if(img.width > img.height){
+    if(img.width > img.height && W < H){
       const rotated = document.createElement('canvas');
       rotated.width = img.height;
       rotated.height = img.width;
@@ -362,13 +362,62 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       drawImg = rotated;
     }
 
-    const photoW = canvas.width - border * 2 * dpi;
-    const photoH = canvas.height - (border + bottom) * dpi;
-    const photoX = border * dpi, photoY = border * dpi;
-    const ratio = Math.min(photoW / drawImg.width, photoH / drawImg.height);
-    const drawW = drawImg.width * ratio, drawH = drawImg.height * ratio;
-    const offsetX = photoX + (photoW - drawW) / 2, offsetY = photoY + (photoH - drawH) / 2;
-    ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+    if (isFullImage) {
+      // =========================================================
+      // 1. MODE FULL GAMBAR (FOTO PENUH 100%, CENTER CROP)
+      // =========================================================
+      const photoW = canvas.width;
+      const photoH = canvas.height;
+      const ratio = Math.max(photoW / drawImg.width, photoH / drawImg.height);
+      const drawW = drawImg.width * ratio;
+      const drawH = drawImg.height * ratio;
+      const offsetX = (photoW - drawW) / 2;
+      const offsetY = (photoH - drawH) / 2;
+
+      ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+
+    } else {
+      // =========================================================
+      // 2. MODE POLAROID (WARNA BINGKAI SESUAI WARNA BACKGROUND)
+      // =========================================================
+      
+      // Tentukan warna bingkai/background polaroid secara presisi
+      let fillColor = "#ffffff";
+      if (bgOption === "custom" && customCol) {
+        fillColor = customCol;
+      } else if (bgOption && bgOption !== "image") {
+        fillColor = bgOption;
+      }
+
+      // Gambar Background / Bingkai Polaroid
+      if (bgOption === "image" && bgImgObjParam) {
+        const bg = bgImgObjParam;
+        const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
+        const x = (canvas.width - bg.width * scale) / 2;
+        const y = (canvas.height - bg.height * scale) / 2;
+        ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
+      } else {
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height); // Mewarnai seluruh bingkai polaroid
+      }
+
+      // Hitung posisi dan ukuran foto di dalam bingkai polaroid
+      const {border, bottom} = getLayoutConfig();
+      const photoW = (W - border * 2) * dpi;
+      const photoH = (H - (border + bottom)) * dpi;
+      const photoX = (border + bleed) * dpi;
+      const photoY = (border + bleed) * dpi;
+
+      const ratio = Math.min(photoW / drawImg.width, photoH / drawImg.height);
+      const drawW = drawImg.width * ratio;
+      const drawH = drawImg.height * ratio;
+
+      const offsetX = photoX + (photoW - drawW) / 2;
+      const offsetY = photoY + (photoH - drawH) / 2;
+
+      // Gambar foto di atas bingkai berwarna
+      ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+    }
 
     return canvas.toDataURL("image/jpeg", 0.92);
   }
