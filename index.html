@@ -200,7 +200,14 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
 <input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
 
-  <!-- Existing controls -->
+<!-- Pilihan Mode Tampilan Foto -->
+<label for="styleSelect">Mode Cetak:</label>
+<select id="styleSelect">
+  <option value="polaroid">Polaroid (Dengan Bingkai)</option>
+  <option value="full">Full Gambar (Tanpa Bingkai)</option>
+</select>
+  
+<!-- Existing controls -->
   <select id="sizeSelect">
     <option value="6x9">2R (6x9 cm)</option>
     <option value="8.9x12.7">3R (8.9x12.7 cm)</option>
@@ -208,6 +215,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     <option value="12.7x17.8">5R (12.7x17.8 cm)</option>
     <option value="15.2x20.3">6R (15.2x20.3 cm)</option>
     <option value="20.3x25.4">8R (20.3x25.4 cm)</option>
+    <option value="25.4x30.5">10R (25.4 x 30.5 cm)</option>
   </select>
 
   <select id="bgSelect">
@@ -233,7 +241,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.6.4</div>
+<div id="appVersion">Versi 1.6.7</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -296,7 +304,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     "10.2x15.2": {margin:0.7, border:0.7, bottom:1.7, w:10.2, h:15.2, pageW:32, pageH:48},
     "12.7x17.8": {margin:0.8, border:0.8, bottom:1.8, w:12.7, h:17.8, pageW:32, pageH:48},
     "15.2x20.3": {margin:0.9, border:0.9, bottom:1.9, w:15.2, h:20.3, pageW:32, pageH:48},
-    "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0, w:20.3, h:25.4, pageW:32, pageH:48}
+    "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0, w:20.3, h:25.4, pageW:32, pageH:48},
+    "25.4x30.5": {margin:1.2, border:1.2, bottom:2.2, w:25.4, h:30.5, pageW:32, pageH:48}
   };
   function getLayoutConfig(){ return layoutConfig[sizeSelect && sizeSelect.value] || {margin:0.5,border:0.5,bottom:1.5,w:6,h:9,pageW:32,pageH:48}; }
 
@@ -331,25 +340,18 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     return best;
   }
 
-  // Create polaroid image
+  // Create polaroid / full image
   async function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImgObjParam){
-    const {border,bottom} = getLayoutConfig();
+    const styleSelect = document.getElementById('styleSelect');
+    const isFullImage = styleSelect && styleSelect.value === "full";
+    const {border, bottom} = getLayoutConfig();
+    
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(W * dpi);
     canvas.height = Math.round(H * dpi);
     const ctx = canvas.getContext('2d');
 
-    if(bgOption === "image" && bgImgObjParam){
-      const bg = bgImgObjParam;
-      const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
-      const x = (canvas.width - bg.width * scale) / 2;
-      const y = (canvas.height - bg.height * scale) / 2;
-      ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
-    } else {
-      ctx.fillStyle = bgOption === "custom" ? customCol : bgOption;
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-    }
-
+    // Rotasi otomatis jika foto lanskap tapi kanvas potret
     let drawImg = img;
     if(img.width > img.height){
       const rotated = document.createElement('canvas');
@@ -362,17 +364,43 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       drawImg = rotated;
     }
 
-    const photoW = canvas.width - border * 2 * dpi;
-    const photoH = canvas.height - (border + bottom) * dpi;
-    const photoX = border * dpi, photoY = border * dpi;
-    const ratio = Math.min(photoW / drawImg.width, photoH / drawImg.height);
-    const drawW = drawImg.width * ratio, drawH = drawImg.height * ratio;
-    const offsetX = photoX + (photoW - drawW) / 2, offsetY = photoY + (photoH - drawH) / 2;
-    ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+    if (isFullImage) {
+      // MODE FULL GAMBAR
+      const photoW = canvas.width;
+      const photoH = canvas.height;
+      const ratio = Math.max(photoW / drawImg.width, photoH / drawImg.height);
+      const drawW = drawImg.width * ratio;
+      const drawH = drawImg.height * ratio;
+      const offsetX = (photoW - drawW) / 2;
+      const offsetY = (photoH - drawH) / 2;
+      ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+
+    } else {
+      // MODE POLAROID (Menggunakan kode inti Anda)
+      if(bgOption === "image" && bgImgObjParam){
+        const bg = bgImgObjParam;
+        const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
+        const x = (canvas.width - bg.width * scale) / 2;
+        const y = (canvas.height - bg.height * scale) / 2;
+        ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
+      } else {
+        ctx.fillStyle = bgOption === "custom" ? customCol : bgOption;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }
+
+      const photoW = canvas.width - border * 2 * dpi;
+      const photoH = canvas.height - (border + bottom) * dpi;
+      const photoX = border * dpi, photoY = border * dpi;
+      
+      const ratio = Math.min(photoW / drawImg.width, photoH / drawImg.height);
+      const drawW = drawImg.width * ratio, drawH = drawImg.height * ratio;
+      const offsetX = photoX + (photoW - drawW) / 2, offsetY = photoY + (photoH - drawH) / 2;
+      
+      ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+    }
 
     return canvas.toDataURL("image/jpeg", 0.92);
   }
-
   // Convert FileList -> Array<File>
   function fileListToArray(fileList){
     const arr = [];
