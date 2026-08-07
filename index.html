@@ -183,6 +183,39 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   transition:opacity 0.3s;
   z-index:10000;
 }
+
+/* Container untuk setiap foto preview */
+.thumb-card {
+  position: relative;
+  display: inline-block;
+}
+/* Tombol aksi overlay di atas foto */
+.thumb-actions {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+.thumb-card:hover .thumb-actions {
+  opacity: 1;
+}
+.thumb-action-btn {
+  padding: 4px 6px;
+  font-size: 11px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+}
+.btn-dup { background: rgba(0, 180, 80, 0.9); }
+.btn-del { background: rgba(220, 0, 0, 0.9); }
+.btn-dup:hover { background: rgba(0, 210, 90, 1); }
+.btn-del:hover { background: rgba(255, 0, 0, 1); }
 </style>
 </head>
 <body>
@@ -241,7 +274,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.6.8</div>
+<div id="appVersion">Versi 1.7.4</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -365,15 +398,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     }
 
     if (isFullImage) {
-      // MODE FULL GAMBAR
-      const photoW = canvas.width;
-      const photoH = canvas.height;
-      const ratio = Math.max(photoW / drawImg.width, photoH / drawImg.height);
-      const drawW = drawImg.width * ratio;
-      const drawH = drawImg.height * ratio;
-      const offsetX = (photoW - drawW) / 2;
-      const offsetY = (photoH - drawH) / 2;
-      ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+      // MODE FULL GAMBAR (Dipaksa Melar Penuh)
+      ctx.drawImage(drawImg, 0, 0, canvas.width, canvas.height);
 
     } else {
       // MODE POLAROID (Menggunakan kode inti Anda)
@@ -509,6 +535,84 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
+// Helper membuat elemen HTML kartu foto beserta event-nya
+  function createCardElement(dataUrl, fileName) {
+    const card = document.createElement('div');
+    card.className = 'thumb-card';
+
+    const thumb = document.createElement('img');
+    thumb.src = dataUrl;
+    thumb.title = fileName;
+    thumb.alt = fileName || "foto";
+
+    const actions = document.createElement('div');
+    actions.className = 'thumb-actions';
+
+    const dupBtn = document.createElement('button');
+    dupBtn.className = 'thumb-action-btn btn-dup';
+    dupBtn.innerHTML = '➕';
+    dupBtn.title = 'Duplikat foto ini';
+    dupBtn.onclick = (e) => {
+      e.stopPropagation();
+      duplicateCardDirect(card);
+    };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'thumb-action-btn btn-del';
+    delBtn.innerHTML = '🗑️';
+    delBtn.title = 'Hapus foto ini';
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteCardDirect(card);
+    };
+
+    actions.appendChild(dupBtn);
+    actions.appendChild(delBtn);
+    card.appendChild(thumb);
+    card.appendChild(actions);
+
+    return card;
+  }
+
+  // DUPLIKAT INSTAN
+  async function duplicateCardDirect(cardElement) {
+    const index = Array.from(previewDiv.children).indexOf(cardElement);
+    if (index === -1) return;
+
+    const fileToDup = currentFiles[index];
+    currentFiles.splice(index + 1, 0, fileToDup);
+
+    let objectUrl = null;
+    try {
+      objectUrl = URL.createObjectURL(fileToDup);
+      const img = await loadImage(objectUrl);
+      const [w, h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
+      const data = await createPolaroid(img, w, h, 96, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
+
+      const newCard = createCardElement(data, fileToDup.name);
+      cardElement.after(newCard); // Sisipkan di sampingnya
+      
+      updateKeterangan();
+      updateAutoCaption();
+    } catch(err) {
+      console.error("Gagal duplikat foto:", err);
+    } finally {
+      if(objectUrl) URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  // HAPUS INSTAN
+  function deleteCardDirect(cardElement) {
+    const index = Array.from(previewDiv.children).indexOf(cardElement);
+    if (index === -1) return;
+
+    currentFiles.splice(index, 1);
+    cardElement.remove(); // Hapus dari layar
+    
+    updateKeterangan();
+    updateAutoCaption();
+  }
+
   // Render preview untuk provided array of files (dengan dukungan HEIC & HEIF lengkap)
   async function renderPreviewForFiles(filesArr){
     currentFiles = []; // Reset array lokal
@@ -576,11 +680,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
         
         const data = await createPolaroid(img, w, h, 96, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
         
-        const thumb = document.createElement('img');
-        thumb.src = data;
-        thumb.title = file.name;
-        thumb.alt = file.name || "foto";
-        previewDiv.appendChild(thumb);
+        const card = createCardElement(data, file.name);
+        previewDiv.appendChild(card);
       }catch(err){
         console.error("Preview load failed:", file && file.name, err);
       }finally{
@@ -752,7 +853,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             try{
               objectUrl = URL.createObjectURL(file);
               const img = await loadImage(objectUrl);
-              const data = await createPolaroid(img, opt.w, opt.h, 118, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
+              const data = await createPolaroid(img, opt.w, opt.h, 200, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
               
               const col = idx % cols;
               const row = Math.floor(idx / cols);
@@ -862,6 +963,35 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     imgModal.addEventListener('click', (e)=>{ if(e.target === imgModal) imgModal.style.display = 'none'; });
   }
 
+// Tambahkan event listener untuk memicu re-render otomatis saat opsi diubah
+[styleSelect, bgSelect, customColor].forEach(el => {
+  if (el) {
+    el.addEventListener('change', () => {
+      if (currentFiles.length > 0) renderPreviewForFiles(currentFiles);
+    });
+  }
+});
+
+// Dan saat background gambar selesai di-load:
+if (bgImageInput) {
+  bgImageInput.addEventListener('change', (e) => {
+    bgImageObj = null;
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = async (ev) => {
+      try {
+        bgImageObj = await loadImage(ev.target.result);
+        if (currentFiles.length > 0) renderPreviewForFiles(currentFiles); // Re-render otomatis
+      } catch (err) {
+        bgImageObj = null;
+        console.error('bg image load err', err);
+      }
+    };
+    r.readAsDataURL(file);
+  });
+}
+
   // ALT tooltips & shortcuts (S=save, R=reset, M=mode)
   let altPressed = false, tooltipTimeouts = [];
   const shortcutMap = [
@@ -890,7 +1020,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   }
   function hideAllTooltips(){ tooltipTimeouts.forEach(t=>clearTimeout(t)); tooltipTimeouts=[]; shortcutMap.forEach(it=>{ if(it.tooltip) it.tooltip.style.opacity='0'; }); }
 
-  document.addEventListener('keydown', (e)=>{
+// Fungsi memunculkan tool huruf  
+document.addEventListener('keydown', (e)=>{
     if(e.key === 'Alt'){ e.preventDefault(); if(!altPressed){ altPressed = true; shortcutMap.forEach(showTooltip); } }
     else if(altPressed){
       const k = e.key.toLowerCase();
@@ -899,6 +1030,22 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     }
   });
   document.addEventListener('keyup', (e)=>{ if(e.key === 'Alt'){ altPressed = false; hideAllTooltips(); } });
+
+// Tutup modal dengan tombol ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && imgModal.style.display === 'flex') {
+    imgModal.style.display = 'none';
+  }
+});
+
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    const filesArr = fileListToArray(e.dataTransfer.files);
+    await renderPreviewForFiles(filesArr);
+  }
+});
 
   // Ensure upload buttons match initial style
   applyUploadButtonStyles();
