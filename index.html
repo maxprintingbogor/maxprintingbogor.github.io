@@ -274,7 +274,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.7.5</div>
+<div id="appVersion">Versi 1.7.6</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -777,8 +777,16 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
         let done = 0;
         const total = currentFiles.length;
-        const finalCaption = (captionInput && captionInput.value.trim()) || "";
-        const safeCaption = finalCaption.replace(/[\\\/:*?"<>|]/g,"_") || "polaroid";
+        // Hitung total lembar secara otomatis
+        const lembar = Math.ceil(currentFiles.length / perPage);
+        
+        const finalCaption = (captionInput && captionInput.value.trim()) || "polaroid";
+        
+        // Membersihkan karakter ilegal pada nama file
+        const safeCaption = finalCaption.replace(/[\\\/:*?"<>|]/g,"_");
+        
+        // Buat nama file akhir yang dilengkapi jumlah lembar
+        const fileName = `${safeCaption} - ${lembar} lembar.pdf`;
 
         for(let i=0;i<currentFiles.length;i+=perPage){
           if(i>0) pdf.addPage();
@@ -846,8 +854,14 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             pdf.line(left + totalW + 0.2, y, left + totalW + 0.7, y);
           }
 
+          // Hitung total lembar secara otomatis
+          const lembar = Math.ceil(currentFiles.length / perPage);
+
+          // Buat teks akhir (jika caption kosong, diberi default "polaroid")
+          const captionText = (finalCaption || "polaroid") + ` - ${lembar} lembar`;
+
           pdf.setFontSize(14);
-          pdf.text(finalCaption, opt.pageW/2, top + totalH + 1.2, {align: "center"});
+          pdf.text(captionText, opt.pageW/2, top + totalH + 1.2, {align: "center"});
           pdf.setTextColor(0, 0, 0);
 
           // 4. PROCESS IMAGES
@@ -877,13 +891,12 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
         }
 
         setTimeout(()=>{
-          pdf.save(safeCaption + '.pdf');
+          pdf.save(fileName); // Menggunakan variabel nama file baru
           if(progressContainer) progressContainer.style.display = "none";
           if(progressBar) progressBar.style.width = "0%";
           if(progressText) progressText.textContent = "0%";
           updateKeterangan();
           
-          // BUKA KEMBALI KONTROL SETELAH SELESAI
           toggleControlsLock(false);
         }, 120);
 
