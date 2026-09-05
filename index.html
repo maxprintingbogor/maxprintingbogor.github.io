@@ -274,7 +274,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   <button id="darkToggle">🌙 Mode Malam</button>
 </div>
 
-<div id="appVersion">Versi 1.7.4</div>
+<div id="appVersion">Versi 1.7.5</div>
 
 <div id="progressContainer">
   <div id="progressBar"></div>
@@ -733,15 +733,35 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // Save PDF (Background Penuh Akurat + Garis Potong Otomatis)
+  // Helper untuk mengunci/membuka semua kontrol saat proses PDF berjalan
+  function toggleControlsLock(isLocked) {
+    // Kunci / buka semua tombol, select, input, dan textarea
+    const controls = document.querySelectorAll('#controls button, #controls select, #controls input, #controls textarea');
+    controls.forEach(el => {
+      el.disabled = isLocked;
+    });
+
+    // Kunci / buka tombol aksi (duplikat & hapus) pada kartu foto di preview
+    const thumbBtns = document.querySelectorAll('.thumb-action-btn');
+    thumbBtns.forEach(btn => {
+      btn.disabled = isLocked;
+    });
+
+    // Cegah interaksi pada area preview
+    if (previewDiv) {
+      previewDiv.style.pointerEvents = isLocked ? 'none' : 'auto';
+    }
+  }
+
+  // Save PDF (Dengan Penguncian Kontrol Penuh)
   if(saveBtn){
     saveBtn.addEventListener('click', async ()=>{
       try{
         if(!currentFiles.length) return alert("Upload foto dulu!");
         if(typeof jsPDF === 'undefined') return alert('Library jsPDF tidak tersedia.');
 
-        // Kunci tombol saat proses
-        saveBtn.disabled = true;
+        // KUNCI SEMUA TOMBOL & KONTROL
+        toggleControlsLock(true);
 
         const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
         const {margin} = getLayoutConfig();
@@ -770,21 +790,15 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           // Variabel untuk menyimpan RGB akurat (default putih)
           let pageBgRgb = [255, 255, 255]; 
 
-          // =========================================================
-          // 1. KODE BACKGROUND MELUAS (AKURAT SESUAI PREVIEW)
-          // =========================================================
+          // 1. BACKGROUND MELUAS
           const bgOpt = bgSelect ? bgSelect.value : "white";
           if(bgOpt !== "image") {
             let colorStr = (bgOpt === "custom" && customColor) ? customColor.value : bgOpt;
-            
-            // Perbaikan khusus jika value-nya "cream" (karena bukan warna standar web)
             if(colorStr.toLowerCase() === "cream") colorStr = "#FFFDD0"; 
 
             if (colorStr.startsWith('#')) {
-              // Jika formatnya sudah HEX (#123456)
               pageBgRgb = hexToRgb(colorStr);
             } else {
-              // Menarik nilai RGB asli persis seperti tampilan di browser
               const tempDiv = document.createElement('div');
               tempDiv.style.color = colorStr;
               document.body.appendChild(tempDiv);
@@ -796,14 +810,11 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
               }
             }
 
-            // Terapkan warna ke halaman PDF
             pdf.setFillColor(pageBgRgb[0], pageBgRgb[1], pageBgRgb[2]);
             pdf.rect(0, 0, opt.pageW, opt.pageH, "F"); 
           }
 
-          // =========================================================
-          // 2. MARGIN COLOR (Ditumpuk di atas background jika dicentang)
-          // =========================================================
+          // 2. MARGIN COLOR
           if(marginColorToggle && marginColorToggle.checked){
             const [r,g,b] = hexToRgb(currentColor);
             pdf.setFillColor(r,g,b);
@@ -812,15 +823,10 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             pdf.rect(opt.pageW-margin,0,margin,opt.pageH,"F");
           }
 
-          // =========================================================
-          // 3. CROP MARKS & GRID LINES (Otomatis menyesuaikan kontras)
-          // =========================================================
+          // 3. CROP MARKS & GRID LINES
           pdf.setLineWidth(0.02);
-          
-          // Cek tingkat kecerahan warna background (Rumus standar brightness)
           const brightness = (pageBgRgb[0] * 299 + pageBgRgb[1] * 587 + pageBgRgb[2] * 114) / 1000;
           
-          // Jika background gelap, garis dan teks jadi terang/abu-abu. Jika terang, jadi hitam.
           if (brightness < 128 || (marginColorToggle && marginColorToggle.checked && currentColor === "#000000")) {
             pdf.setDrawColor(200, 200, 200); 
             pdf.setTextColor(255, 255, 255); 
@@ -842,11 +848,9 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
           pdf.setFontSize(14);
           pdf.text(finalCaption, opt.pageW/2, top + totalH + 1.2, {align: "center"});
-          pdf.setTextColor(0, 0, 0); // Kembalikan ke hitam untuk jaga-jaga
+          pdf.setTextColor(0, 0, 0);
 
-          // =========================================================
-          // 4. PROCESS IMAGES SEQUENTIALLY
-          // =========================================================
+          // 4. PROCESS IMAGES
           for(let idx=0; idx<pageFiles.length; idx++){
             const file = pageFiles[idx];
             let objectUrl = null;
@@ -878,13 +882,16 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           if(progressBar) progressBar.style.width = "0%";
           if(progressText) progressText.textContent = "0%";
           updateKeterangan();
-          saveBtn.disabled = false; // Buka kunci tombol
+          
+          // BUKA KEMBALI KONTROL SETELAH SELESAI
+          toggleControlsLock(false);
         }, 120);
 
       }catch(err){
         console.error('save error', err);
         alert('Terjadi kesalahan saat menyimpan PDF. Cek console.');
-        saveBtn.disabled = false;
+        // BUKA KEMBALI KONTROL JIKA TERJADI ERROR
+        toggleControlsLock(false);
       }
     });
   }
