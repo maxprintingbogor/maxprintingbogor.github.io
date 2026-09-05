@@ -2,306 +2,381 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Aplikasi Layout Polaroid</title>
+<title>Polaroid Print Studio Pro v2.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-body {
-  margin:20px;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background:#f5f5f5;
-  color:#222;
-  transition:background-color 0.4s ease, color 0.4s ease;
-}
-#controls {
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  align-items:center;
-  margin-bottom:15px;
-  padding:15px;
-  background:#fff;
-  border-radius:10px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  transition:background-color 0.4s ease, border-color 0.4s ease;
-}
-select, textarea, input[type="file"], input[type="color"] {
-  padding:8px 12px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  font-size:14px;
-  transition:background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
-}
-textarea {
-  flex:1;
-  min-width:300px;
-  resize:vertical;
-}
-button {
-  padding:10px 16px;
-  border:none;
-  border-radius:6px;
-  background:linear-gradient(90deg,#4facfe,#00f2fe);
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.3s;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-button:hover { background:linear-gradient(90deg,#00f2fe,#4facfe); }
+  :root {
+    --bg-main: #f1f5f9;
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-card-solid: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: #e2e8f0;
+    --accent-color: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    --danger-color: #ef4444;
+    --success-color: #10b981;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  }
 
-#darkToggle {
-  background:#444;
-  color:#fff;
-}
-#darkToggle:hover {
-  background:#666;
-}
-#preview {
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:10px;
-}
-#preview img {
-  height:120px;
-  border:2px solid #ddd;
-  border-radius:6px;
-  object-fit:cover;
-  transition:transform 0.2s;
-  cursor:pointer;
-}
-#preview img:hover {
-  transform:scale(1.05);
-}
-#progressContainer {
-  width:100%;
-  margin:10px 0;
-  display:none;
-  background:#eee;
-  border-radius:10px;
-  overflow:hidden;
-  position:relative;
-  height:25px;
-}
-#progressBar {
-  width:0%;
-  height:100%;
-  background:linear-gradient(90deg,#4facfe,#00f2fe);
-  transition:width 0.3s;
-}
-#progressText {
-  position:absolute;
-  width:100%;
-  top:0;
-  left:0;
-  text-align:center;
-  font-size:14px;
-  line-height:25px;
-  color:#333;
-  font-weight:bold;
-  transition:color 0.4s ease;
-}
-#folderName {
-  font-size:14px;
-  font-weight:bold;
-  color:#0070c0;
-  margin-top:8px;
-}
-#infoKeterangan {
-  margin:5px 0 10px;
-  font-size:14px;
-  font-weight:bold;
-  color:#222;
-  transition:color 0.4s ease;
-}
-#appVersion {
-  width:100%;
-  text-align:right;
-  font-size:12px;
-  color:#555;
-  margin-top:5px;
-  font-style:italic;
-  transition:color 0.4s ease;
-}
+  body.dark-mode {
+    --bg-main: #0b0f19;
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --bg-card-solid: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --accent-color: #6366f1;
+    --accent-hover: #818cf8;
+    --accent-gradient: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  }
 
-/* Responsif */
-@media(max-width:768px){
-  #controls { flex-direction:column; align-items:flex-start; }
-  textarea { min-width:100%; }
-}
-@media(max-width:600px){
-  #preview img { height:200px; }
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
 
-/* Mode Gelap */
-body.dark-mode { background-color:#121212; color:#f1f1f1; }
-body.dark-mode #controls { background:#1e1e1e; border:1px solid #333; }
-body.dark-mode input, body.dark-mode select, body.dark-mode button, body.dark-mode textarea {
-  background:#333; color:#f1f1f1; border:1px solid #555;
-}
-body.dark-mode #preview { background:#222; }
-body.dark-mode #progressContainer { background:#333; }
-body.dark-mode #progressText { color:#ffeb3b; }
-body.dark-mode #folderName { color:#00e0ff; }
-body.dark-mode #infoKeterangan { color:#ffeb3b; }
-body.dark-mode #appVersion { color:#aaa; }
-body.dark-mode #darkToggle { background:#ff9800; color:#000; }
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s, color 0.3s;
+  }
 
-/* Modal Zoom */
-#imgModal {
-  display:none;
-  position:fixed;
-  z-index:9999;
-  left:0;
-  top:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.9);
-  justify-content:center;
-  align-items:center;
-}
-#imgModal img {
-  max-width:90%;
-  max-height:90%;
-  border-radius:10px;
-  box-shadow:0 0 20px rgba(255,255,255,0.3);
-}
+  /* Header Navigation */
+  header {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
 
-/* Tooltip Alt */
-.altTooltip {
-  position:absolute;
-  background:rgba(0,0,0,0.8);
-  color:white;
-  padding:3px 6px;
-  border-radius:4px;
-  font-size:12px;
-  font-family:sans-serif;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity 0.3s;
-  z-index:10000;
-}
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-logo {
+    width: 38px; height: 38px;
+    background: var(--accent-gradient);
+    color: white; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  }
+  .brand h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .brand span { font-size: 11px; background: rgba(79, 70, 229, 0.1); color: var(--accent-color); padding: 3px 8px; border-radius: 20px; font-weight: 700; }
 
-/* Container untuk setiap foto preview */
-.thumb-card {
-  position: relative;
-  display: inline-block;
-}
-/* Tombol aksi overlay di atas foto */
-.thumb-actions {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  z-index: 10;
-}
-.thumb-card:hover .thumb-actions {
-  opacity: 1;
-}
-.thumb-action-btn {
-  padding: 4px 6px;
-  font-size: 11px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: white;
-  font-weight: bold;
-}
-.btn-dup { background: rgba(0, 180, 80, 0.9); }
-.btn-del { background: rgba(220, 0, 0, 0.9); }
-.btn-dup:hover { background: rgba(0, 210, 90, 1); }
-.btn-del:hover { background: rgba(255, 0, 0, 1); }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* Layout App */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+    padding: 24px;
+    flex: 1;
+    max-width: 1800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Sidebar Controls */
+  .sidebar {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: var(--shadow-soft);
+    height: fit-content;
+  }
+
+  .sidebar-section {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .section-label {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+  select, textarea, input[type="text"], input[type="color"] {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card-solid);
+    color: var(--text-primary);
+    font-size: 13px; font-weight: 500;
+    outline: none; transition: all 0.2s ease;
+  }
+
+  select:focus, textarea:focus, input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Buttons */
+  .btn {
+    padding: 11px 16px;
+    border-radius: var(--radius-md);
+    border: none; font-weight: 600; font-size: 13px;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
+  }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent-gradient);
+    color: white; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35); }
+
+  .btn-secondary {
+    background: var(--bg-card-solid); border: 1px solid var(--border-color); color: var(--text-primary);
+  }
+  .btn-secondary:hover { background: var(--border-color); }
+
+  .btn-danger {
+    background: rgba(239, 68, 68, 0.1); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+  .btn-danger:hover { background: var(--danger-color); color: white; }
+
+  .shortcut-badge {
+    font-size: 10px; opacity: 0.7; background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 4px; font-family: monospace;
+  }
+
+  /* Workspace */
+  .workspace { display: flex; flex-direction: column; gap: 20px; }
+
+  /* Stats Bar Operator */
+  .status-banner {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    padding: 20px 24px; border-radius: var(--radius-lg);
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .stat-card { display: flex; align-items: center; gap: 16px; }
+  .stat-icon {
+    width: 48px; height: 48px; border-radius: var(--radius-md);
+    background: rgba(79, 70, 229, 0.1); color: var(--accent-color);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .stat-info .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .stat-info .value { font-size: 18px; font-weight: 800; color: var(--text-primary); margin-top: 2px; }
+
+  /* Progress Bar */
+  #progressContainer {
+    display: none; background: var(--bg-card-solid); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); padding: 14px;
+  }
+  .progress-bg { background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; }
+  #progressBar { width: 0%; height: 100%; background: var(--accent-gradient); transition: width 0.3s; }
+  #progressText { font-size: 12px; font-weight: 700; text-align: center; margin-top: 8px; color: var(--accent-color); }
+
+  /* Preview Gallery */
+  #preview {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px;
+    background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border-color);
+    padding: 24px; border-radius: var(--radius-lg); min-height: 480px; align-content: start; box-shadow: var(--shadow-soft);
+  }
+
+  /* Card Item */
+  .thumb-card {
+    position: relative; border-radius: var(--radius-md); overflow: hidden;
+    border: 1px solid var(--border-color); background: var(--bg-card-solid);
+    aspect-ratio: 2/3; box-shadow: var(--shadow-soft); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .thumb-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .thumb-card img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+
+  .thumb-actions {
+    position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s;
+  }
+  .thumb-card:hover .thumb-actions { opacity: 1; }
+
+  .thumb-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: none; color: white; font-size: 11px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+  }
+  .thumb-btn:hover { transform: scale(1.1); }
+  .btn-dup { background: var(--success-color); }
+  .btn-del { background: var(--danger-color); }
+
+  /* Modal */
+  #imgModal {
+    display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    justify-content:center; align-items:center;
+  }
+  #imgModal img { max-width:90%; max-height:90%; border-radius:var(--radius-lg); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+
+  @media(max-width: 900px){
+    .app-layout { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<div id="controls">
-  <!-- Upload buttons (gaya lembut) -->
-  <button type="button" id="uploadFolderBtn" title="Pilih folder (jika browser mendukung)">
-    📁 Upload Folder
-  </button>
-  <button type="button" id="uploadFilesBtn" title="Pilih file (multi-select)">
-    🖼️ Upload File
-  </button>
+<header>
+  <div class="brand">
+    <div class="brand-logo"><i class="fa-solid fa-bolt"></i></div>
+    <div>
+      <h1>Polaroid Studio</h1>
+      <span>PRO v2.0</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button id="quickSavePDF" class="btn btn-primary">
+      <i class="fa-solid fa-file-pdf"></i> Simpan Cepat <span class="shortcut-badge">Ctrl+S</span>
+    </button>
+    <button id="darkToggle" class="btn btn-secondary">
+      <i class="fa-solid fa-moon"></i>
+    </button>
+  </div>
+</header>
 
-  <!-- Hidden inputs: one for folder (webkitdirectory) and one for files -->
-  <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
-<input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
-
-<!-- Pilihan Mode Tampilan Foto -->
-<label for="styleSelect">Mode Cetak:</label>
-<select id="styleSelect">
-  <option value="polaroid">Polaroid (Dengan Bingkai)</option>
-  <option value="full">Full Gambar (Tanpa Bingkai)</option>
-</select>
+<div class="app-layout">
   
-<!-- Existing controls -->
-  <select id="sizeSelect">
-    <option value="6x9">2R (6x9 cm)</option>
-    <option value="8.9x12.7">3R (8.9x12.7 cm)</option>
-    <option value="10.2x15.2">4R (10.2x15.2 cm)</option>
-    <option value="12.7x17.8">5R (12.7x17.8 cm)</option>
-    <option value="15.2x20.3">6R (15.2x20.3 cm)</option>
-    <option value="20.3x25.4">8R (20.3x25.4 cm)</option>
-    <option value="25.4x30.5">10R (25.4 x 30.5 cm)</option>
-  </select>
+  <!-- SIDEBAR PANEL -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="section-label"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Media</div>
+      <div class="grid-2">
+        <button class="btn btn-secondary" id="uploadFolderBtn">
+          <i class="fa-solid fa-folder"></i> Folder
+        </button>
+        <button class="btn btn-secondary" id="uploadFilesBtn">
+          <i class="fa-solid fa-image"></i> Foto <span class="shortcut-badge">Ctrl+O</span>
+        </button>
+      </div>
+      <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.heif">
+      <input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.heif">
+    </div>
 
-  <select id="bgSelect">
-    <option value="white">Putih</option>
-    <option value="black">Hitam</option>
-    <option value="gray">Abu-abu</option>
-    <option value="blue">Biru</option>
-    <option value="cream">Cream</option>
-    <option value="pink">Pink</option>
-    <option value="custom">Custom Warna</option>
-    <option value="image">Background Gambar</option>
-  </select>
-  <input type="color" id="customColor" style="display:none;">
-  <input type="file" id="bgImageInput" accept="image/*" style="display:none;">
+    <div class="sidebar-section">
+      <div class="section-label"><i class="fa-solid fa-sliders"></i> Konfigurasi Cetak</div>
+      
+      <div class="form-group">
+        <label>Mode Frame</label>
+        <select id="styleSelect">
+          <option value="polaroid">Polaroid (Bingkai)</option>
+          <option value="full">Full Foto (Tanpa Bingkai)</option>
+        </select>
+      </div>
 
-  <textarea id="captionInput" placeholder="Tulis caption di sini" rows="2"></textarea>
+      <div class="form-group">
+        <label>Ukuran Kertas</label>
+        <select id="sizeSelect">
+          <option value="6x9">2R (6 x 9 cm)</option>
+          <option value="8.9x12.7">3R (8.9 x 12.7 cm)</option>
+          <option value="10.2x15.2">4R (10.2 x 15.2 cm)</option>
+          <option value="12.7x17.8">5R (12.7 x 17.8 cm)</option>
+          <option value="15.2x20.3">6R (15.2 x 20.3 cm)</option>
+          <option value="20.3x25.4">8R (20.3 x 25.4 cm)</option>
+          <option value="25.4x30.5">10R (25.4 x 30.5 cm)</option>
+        </select>
+      </div>
 
-  <label><input type="checkbox" id="marginColorToggle" checked> Margin Berwarna</label>
-  <label><input type="checkbox" id="autoCaptionToggle"> Isi Caption Otomatis</label>
+      <div class="form-group">
+        <label>Background</label>
+        <select id="bgSelect">
+          <option value="white">Putih</option>
+          <option value="black">Hitam</option>
+          <option value="gray">Abu-abu</option>
+          <option value="blue">Biru</option>
+          <option value="cream">Cream</option>
+          <option value="pink">Pink</option>
+          <option value="custom">Custom Warna</option>
+          <option value="image">Gambar Custom</option>
+        </select>
+        <input type="color" id="customColor" style="display:none; margin-top:6px;">
+        <input type="file" id="bgImageInput" accept="image/*" style="display:none; margin-top:6px;">
+      </div>
 
-  <button id="savePDF">Simpan PDF</button>
-  <button id="resetBtn">Reset</button>
-  <button id="darkToggle">🌙 Mode Malam</button>
+      <div class="form-group">
+        <label>Caption / Label Pesanan</label>
+        <textarea id="captionInput" rows="2" placeholder="Tulis caption..."></textarea>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; font-weight:600;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="marginColorToggle" checked> Margin Warna
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="autoCaptionToggle"> Caption Otomatis
+        </label>
+      </div>
+    </div>
+
+    <hr style="border:0; border-top:1px solid var(--border-color);">
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button id="savePDF" class="btn btn-primary" style="width:100%;">
+        <i class="fa-solid fa-download"></i> Ekspor PDF Cetak
+      </button>
+      <button id="resetBtn" class="btn btn-danger" style="width:100%;">
+        <i class="fa-solid fa-rotate-left"></i> Reset
+      </button>
+    </div>
+  </aside>
+
+  <!-- WORKSPACE PANEL -->
+  <main class="workspace">
+    <div class="status-banner">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fa-solid fa-print"></i></div>
+        <div class="stat-info">
+          <div class="label">Informasi Cetak Operator</div>
+          <div class="value" id="infoKeterangan">Belum ada foto diunggah</div>
+        </div>
+      </div>
+      <div id="folderName" style="font-size:13px; font-weight:700; color:var(--accent-color);"></div>
+    </div>
+
+    <div id="progressContainer">
+      <div class="progress-bg"><div id="progressBar"></div></div>
+      <div id="progressText">0%</div>
+    </div>
+
+    <div id="preview"></div>
+  </main>
 </div>
 
-<div id="appVersion">Versi 1.7.6</div>
-
-<div id="progressContainer">
-  <div id="progressBar"></div>
-  <div id="progressText">0%</div>
-</div>
-
-<div id="folderName"></div>
-<div id="infoKeterangan"></div>
-<div id="preview"></div>
-
-<!-- Modal Zoom -->
-<div id="imgModal"><img id="modalImg" src="" alt="Preview Besar"></div>
+<div id="imgModal"><img id="modalImg" src="" alt="Preview Zoom"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
 <script>
-/* Bagian Script lengkap untuk layout-polaroid-v2.html
-   - Upload Folder / Upload File (dua tombol)
-   - Tombol responsive ke mode malam
-   - Tidak perlu klik dua kali, preview langsung muncul
-   - Semua fitur lain (PDF, preview, caption, reset, zoom, shortcuts) aktif
-*/
 (function(){
   'use strict';
   const { jsPDF } = window.jspdf || {};
 
-  // Elements
   const uploadFolderBtn = document.getElementById('uploadFolderBtn');
   const uploadFilesBtn = document.getElementById('uploadFilesBtn');
   const uploadFolder = document.getElementById('uploadFolder');
@@ -312,6 +387,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   const bgImageInput = document.getElementById('bgImageInput');
   const captionInput = document.getElementById('captionInput');
   const saveBtn = document.getElementById('savePDF');
+  const quickSaveBtn = document.getElementById('quickSavePDF');
   const resetBtn = document.getElementById('resetBtn');
   const previewDiv = document.getElementById('preview');
   const progressContainer = document.getElementById('progressContainer');
@@ -325,7 +401,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
   const imgModal = document.getElementById('imgModal');
   const modalImg = document.getElementById('modalImg');
 
-  // State
   let currentFiles = [];
   let bgImageObj = null;
   const autoColors = ["#ff0000","#00b050","#0070c0","#7030a0","#FFDC00","#00EAFF","#ff69b4","#828282","#C28FF3","#91E7FF"];
@@ -340,22 +415,22 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0, w:20.3, h:25.4, pageW:32, pageH:48},
     "25.4x30.5": {margin:1.2, border:1.2, bottom:2.2, w:25.4, h:30.5, pageW:32, pageH:48}
   };
-  function getLayoutConfig(){ return layoutConfig[sizeSelect && sizeSelect.value] || {margin:0.5,border:0.5,bottom:1.5,w:6,h:9,pageW:32,pageH:48}; }
+  function getLayoutConfig(){ return layoutConfig[sizeSelect && sizeSelect.value] || layoutConfig["6x9"]; }
 
-  // Helpers
   function loadImage(src){
     return new Promise((resolve,reject)=>{
       const img = new Image();
       img.onload = ()=>resolve(img);
       img.onerror = (e)=>reject(e || new Error('Image load error'));
-      // img.crossOrigin dihapus agar aman untuk file lokal
       img.src = src;
     });
   }
+
   function hexToRgb(hex){
     const m = hex && hex.match(/^#([0-9a-f]{6})$/i);
     return m ? [parseInt(m[1].substr(0,2),16), parseInt(m[1].substr(2,2),16), parseInt(m[1].substr(4,2),16)] : [0,0,0];
   }
+
   function calculateOptimal(w,h){
     const cfg = getLayoutConfig();
     const margin = cfg.margin;
@@ -373,7 +448,12 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     return best;
   }
 
-  // Create polaroid / full image
+  function toggleControlsLock(isLocked) {
+    const controls = document.querySelectorAll('button, select, input, textarea');
+    controls.forEach(el => el.disabled = isLocked);
+    if (previewDiv) previewDiv.style.pointerEvents = isLocked ? 'none' : 'auto';
+  }
+
   async function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImgObjParam){
     const styleSelect = document.getElementById('styleSelect');
     const isFullImage = styleSelect && styleSelect.value === "full";
@@ -384,7 +464,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     canvas.height = Math.round(H * dpi);
     const ctx = canvas.getContext('2d');
 
-    // Rotasi otomatis jika foto lanskap tapi kanvas potret
     let drawImg = img;
     if(img.width > img.height){
       const rotated = document.createElement('canvas');
@@ -398,11 +477,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     }
 
     if (isFullImage) {
-      // MODE FULL GAMBAR (Dipaksa Melar Penuh)
       ctx.drawImage(drawImg, 0, 0, canvas.width, canvas.height);
-
     } else {
-      // MODE POLAROID (Menggunakan kode inti Anda)
       if(bgOption === "image" && bgImgObjParam){
         const bg = bgImgObjParam;
         const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
@@ -427,31 +503,27 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
     return canvas.toDataURL("image/jpeg", 0.92);
   }
-  // Convert FileList -> Array<File>
+
   function fileListToArray(fileList){
     const arr = [];
     for(let i=0;i<fileList.length;i++) arr.push(fileList[i]);
     return arr;
   }
 
-  // Update folderName display (shows only when webkitRelativePath exists)
   function updateFolderName(){
     if(!folderNameEl) return;
     if(!currentFiles.length){ folderNameEl.textContent = ""; return; }
     const f0 = currentFiles[0];
     if(f0 && f0.webkitRelativePath){
       const parts = f0.webkitRelativePath.split('/');
-      if(parts.length > 1) folderNameEl.textContent = `📁 Folder: ${parts[0]}`;
+      if(parts.length > 1) folderNameEl.textContent = `📁 ${parts[0]}`;
       else folderNameEl.textContent = "";
-    } else {
-      folderNameEl.textContent = "";
-    }
+    } else { folderNameEl.textContent = ""; }
   }
 
-  // Update info keterangan (based on current size and calculateOptimal)
   function updateKeterangan(){
     if(!infoKeterangan) return;
-    if(!currentFiles.length){ infoKeterangan.textContent = ""; return; }
+    if(!currentFiles.length){ infoKeterangan.textContent = "Belum ada foto diunggah"; return; }
     const parts = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
     const w = parts[0], h = parts[1];
     const opt = calculateOptimal(w,h);
@@ -460,10 +532,9 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     const rows = Math.max(1, Math.floor((opt.pageH - 2*margin) / opt.h));
     const perPage = Math.max(1, cols * rows);
     const lembar = Math.ceil(currentFiles.length / perPage);
-    infoKeterangan.textContent = `${currentFiles.length} foto = ${lembar} lembar (${perPage} foto / lembar)`;
+    infoKeterangan.textContent = `${currentFiles.length} foto = ${lembar} lembar (${perPage} foto/lembar)`;
   }
 
-  // Auto caption (non-overwriting manual)
   if(captionInput){
     captionInput.addEventListener('input', ()=>{ captionInput.dataset.manual = "true"; });
   }
@@ -480,15 +551,9 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       }
     });
   }
+
   function updateAutoCaption(force=false){
-    if(!autoCaptionToggle) return;
-    if(!autoCaptionToggle.checked){
-      if(captionInput && (captionInput.dataset.manual !== "true" || force)){
-        captionInput.value = "";
-        captionInput.dataset.manual = "";
-      }
-      return;
-    }
+    if(!autoCaptionToggle || !autoCaptionToggle.checked) return;
     if(currentFiles.length === 0) return;
     if(captionInput && captionInput.dataset && captionInput.dataset.manual === "true" && !force) return;
 
@@ -507,7 +572,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     if(captionInput) captionInput.value = `${folder} = ${lembar} lembar A3`;
   }
 
-  // sizeSelect change binding
   if(sizeSelect){
     sizeSelect.addEventListener('change', ()=>{
       updateKeterangan();
@@ -515,27 +579,13 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // bgSelect change
   if(bgSelect){
     bgSelect.addEventListener('change', ()=>{
-      customColor.style.display = bgSelect.value === "custom" ? "inline-block" : "none";
-      bgImageInput.style.display = bgSelect.value === "image" ? "inline-block" : "none";
-    });
-  }
-  if(bgImageInput){
-    bgImageInput.addEventListener('change', (e)=>{
-      bgImageObj = null;
-      const file = e.target.files && e.target.files[0];
-      if(!file) return;
-      const r = new FileReader();
-      r.onload = async (ev)=>{
-        try{ bgImageObj = await loadImage(ev.target.result); } catch(err){ bgImageObj = null; console.error('bg image load err',err); }
-      };
-      r.readAsDataURL(file);
+      customColor.style.display = bgSelect.value === "custom" ? "block" : "none";
+      bgImageInput.style.display = bgSelect.value === "image" ? "block" : "none";
     });
   }
 
-// Helper membuat elemen HTML kartu foto beserta event-nya
   function createCardElement(dataUrl, fileName) {
     const card = document.createElement('div');
     card.className = 'thumb-card';
@@ -543,28 +593,19 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     const thumb = document.createElement('img');
     thumb.src = dataUrl;
     thumb.title = fileName;
-    thumb.alt = fileName || "foto";
 
     const actions = document.createElement('div');
     actions.className = 'thumb-actions';
 
     const dupBtn = document.createElement('button');
-    dupBtn.className = 'thumb-action-btn btn-dup';
-    dupBtn.innerHTML = '➕';
-    dupBtn.title = 'Duplikat foto ini';
-    dupBtn.onclick = (e) => {
-      e.stopPropagation();
-      duplicateCardDirect(card);
-    };
+    dupBtn.className = 'thumb-btn btn-dup';
+    dupBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+    dupBtn.onclick = (e) => { e.stopPropagation(); duplicateCardDirect(card); };
 
     const delBtn = document.createElement('button');
-    delBtn.className = 'thumb-action-btn btn-del';
-    delBtn.innerHTML = '🗑️';
-    delBtn.title = 'Hapus foto ini';
-    delBtn.onclick = (e) => {
-      e.stopPropagation();
-      deleteCardDirect(card);
-    };
+    delBtn.className = 'thumb-btn btn-del';
+    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    delBtn.onclick = (e) => { e.stopPropagation(); deleteCardDirect(card); };
 
     actions.appendChild(dupBtn);
     actions.appendChild(delBtn);
@@ -574,7 +615,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     return card;
   }
 
-  // DUPLIKAT INSTAN
   async function duplicateCardDirect(cardElement) {
     const index = Array.from(previewDiv.children).indexOf(cardElement);
     if (index === -1) return;
@@ -590,7 +630,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       const data = await createPolaroid(img, w, h, 96, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
 
       const newCard = createCardElement(data, fileToDup.name);
-      cardElement.after(newCard); // Sisipkan di sampingnya
+      cardElement.after(newCard);
       
       updateKeterangan();
       updateAutoCaption();
@@ -601,54 +641,38 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     }
   }
 
-  // HAPUS INSTAN
   function deleteCardDirect(cardElement) {
     const index = Array.from(previewDiv.children).indexOf(cardElement);
     if (index === -1) return;
 
     currentFiles.splice(index, 1);
-    cardElement.remove(); // Hapus dari layar
+    cardElement.remove();
     
     updateKeterangan();
     updateAutoCaption();
   }
 
-  // Render preview untuk provided array of files (dengan dukungan HEIC & HEIF lengkap)
   async function renderPreviewForFiles(filesArr){
-    currentFiles = []; // Reset array lokal
+    currentFiles = [];
     
-    // Tampilkan progress bar saat mulai memproses file
     if(progressContainer) progressContainer.style.display = "block";
     if(progressBar) progressBar.style.width = "0%";
     if(progressText) progressText.textContent = "Menyiapkan file... (0%)";
 
     const totalFiles = filesArr.length;
 
-    // Filter dan konversi HEIC / HEIF jika ada
     for(let f = 0; f < totalFiles; f++) {
       let file = filesArr[f];
       let fileName = file.name ? file.name.toLowerCase() : '';
       
-      // Deteksi ekstensi .heic, .heif, atau tipe mime terkait
-      const isHeicOrHeif = fileName.endsWith('.heic') || 
-                           fileName.endsWith('.heif') || 
-                           file.type === 'image/heic' || 
-                           file.type === 'image/heif';
+      const isHeicOrHeif = fileName.endsWith('.heic') || fileName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
 
       if(isHeicOrHeif) {
         try {
-          let convertedBlob = await heic2any({
-            blob: file,
-            toType: "image/jpeg",
-            quality: 0.7
-          });
+          let convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.7 });
           if(Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
-          
-          // Ubah nama file target menjadi .jpg agar mulus dibaca canvas & jsPDF
           const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-          file = new File([convertedBlob], newName, {
-            type: "image/jpeg"
-          });
+          file = new File([convertedBlob], newName, { type: "image/jpeg" });
         } catch(err) {
           console.error("Gagal konversi HEIF/HEIC:", file.name, err);
         }
@@ -701,16 +725,11 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
       if(progressText) progressText.textContent = "0%";
     }, 400);
   }
-  // Handle uploadFolderBtn click -> open hidden input
+
   if(uploadFolderBtn && uploadFolder){
-    uploadFolderBtn.addEventListener('click', (e)=>{
-      // clear previous selection so change fires even if same folder chosen
-      uploadFolder.value = "";
-      uploadFolder.click();
-    });
+    uploadFolderBtn.addEventListener('click', ()=>{ uploadFolder.value = ""; uploadFolder.click(); });
     uploadFolder.addEventListener('change', async (e)=>{
       const filesArr = fileListToArray(e.target.files || []);
-      // sort by webkitRelativePath to preserve folder order
       filesArr.sort((a,b)=>{
         const pa = a.webkitRelativePath || a.name;
         const pb = b.webkitRelativePath || b.name;
@@ -720,47 +739,21 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // Handle uploadFilesBtn click -> open hidden input
   if(uploadFilesBtn && uploadFiles){
-    uploadFilesBtn.addEventListener('click', (e)=>{
-      uploadFiles.value = "";
-      uploadFiles.click();
-    });
+    uploadFilesBtn.addEventListener('click', ()=>{ uploadFiles.value = ""; uploadFiles.click(); });
     uploadFiles.addEventListener('change', async (e)=>{
       const filesArr = fileListToArray(e.target.files || []);
-      // normal file list (no webkitRelativePath)
       await renderPreviewForFiles(filesArr);
     });
   }
 
-  // Helper untuk mengunci/membuka semua kontrol saat proses PDF berjalan
-  function toggleControlsLock(isLocked) {
-    // Kunci / buka semua tombol, select, input, dan textarea
-    const controls = document.querySelectorAll('#controls button, #controls select, #controls input, #controls textarea');
-    controls.forEach(el => {
-      el.disabled = isLocked;
-    });
-
-    // Kunci / buka tombol aksi (duplikat & hapus) pada kartu foto di preview
-    const thumbBtns = document.querySelectorAll('.thumb-action-btn');
-    thumbBtns.forEach(btn => {
-      btn.disabled = isLocked;
-    });
-
-    // Cegah interaksi pada area preview
-    if (previewDiv) {
-      previewDiv.style.pointerEvents = isLocked ? 'none' : 'auto';
-    }
-  }
-
-  // Save PDF (Dengan Penguncian Kontrol Penuh)
+  // EKSPOR PDF CETAK
   if(saveBtn){
     saveBtn.addEventListener('click', async ()=>{
       try{
         if(!currentFiles.length) return alert("Upload foto dulu!");
         if(typeof jsPDF === 'undefined') return alert('Library jsPDF tidak tersedia.');
 
-        // KUNCI SEMUA TOMBOL & KONTROL
         toggleControlsLock(true);
 
         const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
@@ -777,15 +770,11 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
         let done = 0;
         const total = currentFiles.length;
-        // Hitung total lembar secara otomatis
-        const lembar = Math.ceil(currentFiles.length / perPage);
+        const lembar = Math.ceil(total / perPage);
         
-        const finalCaption = (captionInput && captionInput.value.trim()) || "polaroid";
-        
-        // Membersihkan karakter ilegal pada nama file
-        const safeCaption = finalCaption.replace(/[\\\/:*?"<>|]/g,"_");
-        
-        // Buat nama file akhir yang dilengkapi jumlah lembar
+        const rawCaption = (captionInput && captionInput.value.trim()) || "polaroid";
+        const captionText = `${rawCaption} - ${lembar} lembar`;
+        const safeCaption = rawCaption.replace(/[\\\/:*?"<>|]/g,"_");
         const fileName = `${safeCaption} - ${lembar} lembar.pdf`;
 
         for(let i=0;i<currentFiles.length;i+=perPage){
@@ -795,10 +784,8 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
           const left = margin + (opt.pageW - 2*margin - totalW)/2;
           const top = margin + (opt.pageH - 2*margin - totalH)/2;
 
-          // Variabel untuk menyimpan RGB akurat (default putih)
           let pageBgRgb = [255, 255, 255]; 
 
-          // 1. BACKGROUND MELUAS
           const bgOpt = bgSelect ? bgSelect.value : "white";
           if(bgOpt !== "image") {
             let colorStr = (bgOpt === "custom" && customColor) ? customColor.value : bgOpt;
@@ -822,7 +809,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             pdf.rect(0, 0, opt.pageW, opt.pageH, "F"); 
           }
 
-          // 2. MARGIN COLOR
           if(marginColorToggle && marginColorToggle.checked){
             const [r,g,b] = hexToRgb(currentColor);
             pdf.setFillColor(r,g,b);
@@ -831,7 +817,6 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             pdf.rect(opt.pageW-margin,0,margin,opt.pageH,"F");
           }
 
-          // 3. CROP MARKS & GRID LINES
           pdf.setLineWidth(0.02);
           const brightness = (pageBgRgb[0] * 299 + pageBgRgb[1] * 587 + pageBgRgb[2] * 114) / 1000;
           
@@ -854,17 +839,10 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
             pdf.line(left + totalW + 0.2, y, left + totalW + 0.7, y);
           }
 
-          // Hitung total lembar secara otomatis
-          const lembar = Math.ceil(currentFiles.length / perPage);
-
-          // Buat teks akhir (jika caption kosong, diberi default "polaroid")
-          const captionText = (finalCaption || "polaroid") + ` - ${lembar} lembar`;
-
           pdf.setFontSize(14);
           pdf.text(captionText, opt.pageW/2, top + totalH + 1.2, {align: "center"});
           pdf.setTextColor(0, 0, 0);
 
-          // 4. PROCESS IMAGES
           for(let idx=0; idx<pageFiles.length; idx++){
             const file = pageFiles[idx];
             let objectUrl = null;
@@ -891,7 +869,7 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
         }
 
         setTimeout(()=>{
-          pdf.save(fileName); // Menggunakan variabel nama file baru
+          pdf.save(fileName);
           if(progressContainer) progressContainer.style.display = "none";
           if(progressBar) progressBar.style.width = "0%";
           if(progressText) progressText.textContent = "0%";
@@ -902,14 +880,17 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
 
       }catch(err){
         console.error('save error', err);
-        alert('Terjadi kesalahan saat menyimpan PDF. Cek console.');
-        // BUKA KEMBALI KONTROL JIKA TERJADI ERROR
+        alert('Terjadi kesalahan saat menyimpan PDF.');
         toggleControlsLock(false);
       }
     });
   }
 
-  // Reset clears both file inputs
+  // Quick Save Trigger
+  if(quickSaveBtn && saveBtn){
+    quickSaveBtn.addEventListener('click', () => saveBtn.click());
+  }
+
   if(resetBtn){
     resetBtn.addEventListener('click', ()=>{
       currentFiles = [];
@@ -931,144 +912,84 @@ body.dark-mode #darkToggle { background:#ff9800; color:#000; }
     });
   }
 
-  // Dark mode - persistence & style tweak for upload buttons
+  // Dark Mode Toggle
   window.addEventListener('DOMContentLoaded', ()=>{
     try{ if(localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode'); }catch(e){}
-    // initial upload button style adjust
-    applyUploadButtonStyles();
   });
   if(darkToggle){
     darkToggle.addEventListener('click', ()=>{
       const isDark = document.body.classList.toggle('dark-mode');
       try{ localStorage.setItem('darkMode', isDark); }catch(e){}
-      applyUploadButtonStyles();
     });
   }
 
-  // Apply gentle styles to the upload buttons to match mode (B style)
-  function applyUploadButtonStyles(){
-    const lightStyle = "background:#f3f7ff;color:#073b6f;border:1px solid #d6e6ff;padding:9px 12px;border-radius:8px;box-shadow:none;";
-    const darkStyle  = "background:#2a3038;color:#dff7ff;border:1px solid #39424a;padding:9px 12px;border-radius:8px;box-shadow:none;";
-    if(document.body.classList.contains('dark-mode')){
-      uploadFolderBtn.style.cssText = darkStyle;
-      uploadFilesBtn.style.cssText = darkStyle;
-      // keep icon gap & alignment similar to other buttons
-      uploadFolderBtn.style.display = "inline-flex";
-      uploadFolderBtn.style.alignItems = "center";
-      uploadFolderBtn.style.gap = "6px";
-      uploadFilesBtn.style.display = "inline-flex";
-      uploadFilesBtn.style.alignItems = "center";
-      uploadFilesBtn.style.gap = "6px";
-    } else {
-      uploadFolderBtn.style.cssText = lightStyle;
-      uploadFilesBtn.style.cssText = lightStyle;
-      uploadFolderBtn.style.display = "inline-flex";
-      uploadFolderBtn.style.alignItems = "center";
-      uploadFolderBtn.style.gap = "6px";
-      uploadFilesBtn.style.display = "inline-flex";
-      uploadFilesBtn.style.alignItems = "center";
-      uploadFilesBtn.style.gap = "6px";
-    }
-  }
-
-  // Modal zoom for preview thumbnails
+  // Modal Zoom
   if(previewDiv && imgModal && modalImg){
     previewDiv.addEventListener('click', (e)=>{
       if(e.target && e.target.tagName === 'IMG'){
         modalImg.src = e.target.src;
-        modalImg.alt = e.target.alt || '';
         imgModal.style.display = 'flex';
       }
     });
     imgModal.addEventListener('click', (e)=>{ if(e.target === imgModal) imgModal.style.display = 'none'; });
   }
 
-// Tambahkan event listener untuk memicu re-render otomatis saat opsi diubah
-[styleSelect, bgSelect, customColor].forEach(el => {
-  if (el) {
-    el.addEventListener('change', () => {
-      if (currentFiles.length > 0) renderPreviewForFiles(currentFiles);
-    });
-  }
-});
-
-// Dan saat background gambar selesai di-load:
-if (bgImageInput) {
-  bgImageInput.addEventListener('change', (e) => {
-    bgImageObj = null;
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = async (ev) => {
-      try {
-        bgImageObj = await loadImage(ev.target.result);
-        if (currentFiles.length > 0) renderPreviewForFiles(currentFiles); // Re-render otomatis
-      } catch (err) {
-        bgImageObj = null;
-        console.error('bg image load err', err);
-      }
-    };
-    r.readAsDataURL(file);
-  });
-}
-
-  // ALT tooltips & shortcuts (S=save, R=reset, M=mode)
-  let altPressed = false, tooltipTimeouts = [];
-  const shortcutMap = [
-    {key:'s', el: saveBtn, label:'S'},
-    {key:'r', el: resetBtn, label:'R'},
-    {key:'m', el: darkToggle, label:'M'}
-  ];
-  shortcutMap.forEach(item=>{
-    if(!item.el) return;
-    const tip = document.createElement('div');
-    tip.className = 'altTooltip';
-    tip.textContent = item.label;
-    tip.style.opacity = '0';
-    tip.style.position = 'absolute';
-    tip.style.pointerEvents = 'none';
-    document.body.appendChild(tip);
-    item.tooltip = tip;
-  });
-  function showTooltip(item){
-    if(!item || !item.el || !item.tooltip) return;
-    const rect = item.el.getBoundingClientRect();
-    item.tooltip.style.top = (window.scrollY + rect.top - 28) + 'px';
-    item.tooltip.style.left = (window.scrollX + rect.left + rect.width/2 - item.tooltip.offsetWidth/2) + 'px';
-    item.tooltip.style.opacity = '1';
-    tooltipTimeouts.push(setTimeout(()=>{ item.tooltip.style.opacity = '0'; }, 3000));
-  }
-  function hideAllTooltips(){ tooltipTimeouts.forEach(t=>clearTimeout(t)); tooltipTimeouts=[]; shortcutMap.forEach(it=>{ if(it.tooltip) it.tooltip.style.opacity='0'; }); }
-
-// Fungsi memunculkan tool huruf  
-document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Alt'){ e.preventDefault(); if(!altPressed){ altPressed = true; shortcutMap.forEach(showTooltip); } }
-    else if(altPressed){
-      const k = e.key.toLowerCase();
-      shortcutMap.forEach(item => { if(item.key === k && item.el) item.el.click(); });
-      hideAllTooltips();
+  // Shortcuts Operator
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && imgModal && imgModal.style.display === 'flex') {
+      imgModal.style.display = 'none';
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      if (saveBtn) saveBtn.click();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+      e.preventDefault();
+      if (uploadFilesBtn) uploadFilesBtn.click();
+      return;
     }
   });
-  document.addEventListener('keyup', (e)=>{ if(e.key === 'Alt'){ altPressed = false; hideAllTooltips(); } });
 
-// Tutup modal dengan tombol ESC
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && imgModal.style.display === 'flex') {
-    imgModal.style.display = 'none';
+  // Re-render saat opsi diubah
+  const styleSelect = document.getElementById('styleSelect');
+  [styleSelect, bgSelect, customColor].forEach(el => {
+    if (el) {
+      el.addEventListener('change', () => {
+        if (currentFiles.length > 0) renderPreviewForFiles(currentFiles);
+      });
+    }
+  });
+
+  if (bgImageInput) {
+    bgImageInput.addEventListener('change', (e) => {
+      bgImageObj = null;
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = async (ev) => {
+        try {
+          bgImageObj = await loadImage(ev.target.result);
+          if (currentFiles.length > 0) renderPreviewForFiles(currentFiles);
+        } catch (err) {
+          bgImageObj = null;
+          console.error('bg image load err', err);
+        }
+      };
+      r.readAsDataURL(file);
+    });
   }
-});
 
-window.addEventListener('dragover', (e) => e.preventDefault());
-window.addEventListener('drop', async (e) => {
-  e.preventDefault();
-  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-    const filesArr = fileListToArray(e.dataTransfer.files);
-    await renderPreviewForFiles(filesArr);
-  }
-});
-
-  // Ensure upload buttons match initial style
-  applyUploadButtonStyles();
+  // Drag and Drop
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const filesArr = fileListToArray(e.dataTransfer.files);
+      await renderPreviewForFiles(filesArr);
+    }
+  });
 
 })();
 </script>
