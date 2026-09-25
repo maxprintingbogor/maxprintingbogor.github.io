@@ -2,373 +2,538 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Polaroid Print Studio Pro v2.0</title>
+<title>Aplikasi Layout Polaroid - Produksi Massal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Fonts & Icons -->
+<!-- Google Fonts: Plus Jakarta Sans -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-  :root {
-    --bg-main: #f1f5f9;
-    --bg-card: rgba(255, 255, 255, 0.85);
-    --bg-card-solid: #ffffff;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --border-color: #e2e8f0;
-    --accent-color: #4f46e5;
-    --accent-hover: #4338ca;
-    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    --danger-color: #ef4444;
-    --success-color: #10b981;
-    --radius-lg: 16px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
-    --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+:root {
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #eef2ff;
+  --accent-green: #10b981;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --radius: 12px;
+}
+
+body.dark-mode {
+  --bg-main: #0f172a;
+  --bg-card: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-light: #1e1b4b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.5;
+  padding: 24px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+.app-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header Navbar */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary), #a855f7);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.brand-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand-title p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Card Control Main */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+}
+
+/* Grid Layout Controls */
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Form Controls */
+select, input[type="text"], input[type="color"] {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+select:focus, input[type="text"]:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+/* Toggle Checkbox Modern */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.checkbox-group span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+.btn-success:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--bg-main);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.btn-secondary:hover {
+  background: var(--border-color);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+.btn-ghost:hover {
+  color: var(--text-main);
+  background: var(--bg-main);
+}
+
+.upload-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Alert Banner */
+.alert-info {
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary);
+  color: var(--text-main);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Progress Bar Modern */
+#progressContainer {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-main);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+#progressBar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent-green));
+  transition: width 0.3s ease;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Batch Summary Cards */
+#batchSummary {
+  display: none;
+}
+
+.batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.batch-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.batch-item:hover {
+  border-color: var(--primary);
+}
+
+.batch-name-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.batch-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--primary);
+}
+
+.original-name {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.detected-tag {
+  display: inline-block;
+  font-size: 11px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+.batch-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.batch-controls select {
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  text-align: center;
+}
+
+.status-badge.done {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.status-badge.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.footer-info {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .batch-item {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
-
-  body.dark-mode {
-    --bg-main: #0b0f19;
-    --bg-card: rgba(30, 41, 59, 0.7);
-    --bg-card-solid: #1e293b;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --border-color: #334155;
-    --accent-color: #6366f1;
-    --accent-hover: #818cf8;
-    --accent-gradient: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  .batch-controls {
+    flex-wrap: wrap;
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-
-  body {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    transition: background-color 0.3s, color 0.3s;
-  }
-
-  /* Header Navigation */
-  header {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-color);
-    padding: 14px 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand-logo {
-    width: 38px; height: 38px;
-    background: var(--accent-gradient);
-    color: white; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-  }
-  .brand h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-  .brand span { font-size: 11px; background: rgba(79, 70, 229, 0.1); color: var(--accent-color); padding: 3px 8px; border-radius: 20px; font-weight: 700; }
-
-  .header-actions { display: flex; gap: 10px; align-items: center; }
-
-  /* Layout App */
-  .app-layout {
-    display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 24px;
-    padding: 24px;
-    flex: 1;
-    max-width: 1800px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  /* Sidebar Controls */
-  .sidebar {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    box-shadow: var(--shadow-soft);
-    height: fit-content;
-  }
-
-  .sidebar-section {
-    display: flex; flex-direction: column; gap: 12px;
-  }
-
-  .section-label {
-    font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.8px;
-    display: flex; align-items: center; gap: 6px;
-  }
-
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
-  .form-group label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-
-  select, textarea, input[type="text"], input[type="color"] {
-    width: 100%;
-    padding: 11px 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    background: var(--bg-card-solid);
-    color: var(--text-primary);
-    font-size: 13px; font-weight: 500;
-    outline: none; transition: all 0.2s ease;
-  }
-
-  select:focus, textarea:focus, input:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-  }
-
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  /* Buttons */
-  .btn {
-    padding: 11px 16px;
-    border-radius: var(--radius-md);
-    border: none; font-weight: 600; font-size: 13px;
-    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-    gap: 8px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative; overflow: hidden;
-  }
-  .btn:active { transform: scale(0.98); }
-
-  .btn-primary {
-    background: var(--accent-gradient);
-    color: white; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
-  }
-  .btn-primary:hover { box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35); }
-
-  .btn-secondary {
-    background: var(--bg-card-solid); border: 1px solid var(--border-color); color: var(--text-primary);
-  }
-  .btn-secondary:hover { background: var(--border-color); }
-
-  .btn-danger {
-    background: rgba(239, 68, 68, 0.1); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.2);
-  }
-  .btn-danger:hover { background: var(--danger-color); color: white; }
-
-  .shortcut-badge {
-    font-size: 10px; opacity: 0.7; background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 4px; font-family: monospace;
-  }
-
-  /* Workspace */
-  .workspace { display: flex; flex-direction: column; gap: 20px; }
-
-  /* Stats Bar Operator */
-  .status-banner {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color);
-    padding: 20px 24px; border-radius: var(--radius-lg);
-    display: flex; justify-content: space-between; align-items: center;
-    box-shadow: var(--shadow-soft);
-  }
-
-  .stat-card { display: flex; align-items: center; gap: 16px; }
-  .stat-icon {
-    width: 48px; height: 48px; border-radius: var(--radius-md);
-    background: rgba(79, 70, 229, 0.1); color: var(--accent-color);
-    display: flex; align-items: center; justify-content: center; font-size: 20px;
-  }
-  .stat-info .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
-  .stat-info .value { font-size: 18px; font-weight: 800; color: var(--text-primary); margin-top: 2px; }
-
-  /* Progress Bar */
-  #progressContainer {
-    display: none; background: var(--bg-card-solid); border: 1px solid var(--border-color);
-    border-radius: var(--radius-md); padding: 14px;
-  }
-  .progress-bg { background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; }
-  #progressBar { width: 0%; height: 100%; background: var(--accent-gradient); transition: width 0.3s; }
-  #progressText { font-size: 12px; font-weight: 700; text-align: center; margin-top: 8px; color: var(--accent-color); }
-
-  /* Preview Gallery */
-  #preview {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px;
-    background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border-color);
-    padding: 24px; border-radius: var(--radius-lg); min-height: 480px; align-content: start; box-shadow: var(--shadow-soft);
-  }
-
-  /* Card Item */
-  .thumb-card {
-    position: relative; border-radius: var(--radius-md); overflow: hidden;
-    border: 1px solid var(--border-color); background: var(--bg-card-solid);
-    aspect-ratio: 2/3; box-shadow: var(--shadow-soft); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .thumb-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
-  .thumb-card img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
-
-  .thumb-actions {
-    position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s;
-  }
-  .thumb-card:hover .thumb-actions { opacity: 1; }
-
-  .thumb-btn {
-    width: 28px; height: 28px; border-radius: 50%; border: none; color: white; font-size: 11px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
-  }
-  .thumb-btn:hover { transform: scale(1.1); }
-  .btn-dup { background: var(--success-color); }
-  .btn-del { background: var(--danger-color); }
-
-  /* Modal */
-  #imgModal {
-    display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%;
-    background:rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-    justify-content:center; align-items:center;
-  }
-  #imgModal img { max-width:90%; max-height:90%; border-radius:var(--radius-lg); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-
-  @media(max-width: 900px){
-    .app-layout { grid-template-columns: 1fr; }
-  }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">
-    <div class="brand-logo"><i class="fa-solid fa-bolt"></i></div>
-    <div>
-      <h1>Polaroid Studio</h1>
-      <span>PRO v2.0</span>
-    </div>
-  </div>
-  <div class="header-actions">
-    <button id="quickSavePDF" class="btn btn-primary">
-      <i class="fa-solid fa-file-pdf"></i> Simpan Cepat <span class="shortcut-badge">Ctrl+S</span>
-    </button>
-    <button id="darkToggle" class="btn btn-secondary">
-      <i class="fa-solid fa-moon"></i>
-    </button>
-  </div>
-</header>
-
-<div class="app-layout">
+<div class="app-container">
   
-  <!-- SIDEBAR PANEL -->
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="section-label"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Media</div>
-      <div class="grid-2">
-        <button class="btn btn-secondary" id="uploadFolderBtn">
-          <i class="fa-solid fa-folder"></i> Folder
-        </button>
-        <button class="btn btn-secondary" id="uploadFilesBtn">
-          <i class="fa-solid fa-image"></i> Foto <span class="shortcut-badge">Ctrl+O</span>
-        </button>
+  <!-- Header App -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">P</div>
+      <div class="brand-title">
+        <h1>Polaroid Studio Pro</h1>
+        <p>Automated Batch Layout & Export</p>
       </div>
-      <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.heif">
-      <input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.heif">
+    </div>
+    <div class="header-actions">
+      <button id="darkToggle" class="btn btn-ghost" title="Ubah Mode Warna">🌙 Theme</button>
+    </div>
+  </header>
+
+  <!-- Section 1: Upload & Input Folder -->
+  <div class="card">
+    <div class="card-title">1. Sumber File Foto</div>
+    <div class="upload-buttons">
+      <button type="button" id="uploadFolderBtn" class="btn btn-primary">
+        📁 Upload Folder Pesanan
+      </button>
+      <button type="button" id="uploadFilesBtn" class="btn btn-secondary">
+        🖼️ Upload File Satuan
+      </button>
     </div>
 
-    <div class="sidebar-section">
-      <div class="section-label"><i class="fa-solid fa-sliders"></i> Konfigurasi Cetak</div>
+    <input type="file" id="uploadFolder" style="display:none" webkitdirectory directory multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
+    <input type="file" id="uploadFiles" style="display:none" multiple accept="image/*,.heic,.heif,.HEIC,.HEIF">
+  </div>
+
+  <!-- Section 2: Global Configuration -->
+  <div class="card">
+    <div class="card-title">2. Pengaturan Default Layout</div>
+    <div class="controls-grid">
       
-      <div class="form-group">
-        <label>Mode Frame</label>
+      <div class="control-group">
+        <label for="styleSelect">Preset Style</label>
         <select id="styleSelect">
           <option value="polaroid">Polaroid (Bingkai)</option>
-          <option value="full">Full Foto (Tanpa Bingkai)</option>
+          <option value="full">Full Gambar</option>
         </select>
       </div>
 
-      <div class="form-group">
-        <label>Ukuran Kertas</label>
+      <div class="control-group">
+        <label for="sizeSelect">Ukuran Cetak</label>
         <select id="sizeSelect">
-          <option value="6x9">2R (6 x 9 cm)</option>
-          <option value="8.9x12.7">3R (8.9 x 12.7 cm)</option>
-          <option value="10.2x15.2">4R (10.2 x 15.2 cm)</option>
-          <option value="12.7x17.8">5R (12.7 x 17.8 cm)</option>
-          <option value="15.2x20.3">6R (15.2 x 20.3 cm)</option>
-          <option value="20.3x25.4">8R (20.3 x 25.4 cm)</option>
+          <option value="6x9">2R (6x9 cm)</option>
+          <option value="8.9x12.7">3R (8.9x12.7 cm)</option>
+          <option value="10.2x15.2">4R (10.2x15.2 cm)</option>
+          <option value="12.7x17.8">5R (12.7x17.8 cm)</option>
+          <option value="15.2x20.3">6R (15.2x20.3 cm)</option>
+          <option value="20.3x25.4">8R (20.3x25.4 cm)</option>
           <option value="25.4x30.5">10R (25.4 x 30.5 cm)</option>
         </select>
       </div>
 
-      <div class="form-group">
-        <label>Background</label>
+      <div class="control-group">
+        <label for="fitSelect">Atur Genap Lembar</label>
+        <select id="fitSelect">
+          <option value="asli">Asli (Sesuai Jumlah Foto)</option>
+          <option value="fill">⚡ Genapkan (Duplikat Foto Sisa)</option>
+          <option value="trim">✂️ Potong (Buang Foto Sisa)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="bgSelect">Background Warna</label>
         <select id="bgSelect">
           <option value="white">Putih</option>
           <option value="black">Hitam</option>
           <option value="gray">Abu-abu</option>
-          <option value="blue">Biru</option>
           <option value="cream">Cream</option>
           <option value="pink">Pink</option>
+          <option value="blue">Biru</option>
           <option value="custom">Custom Warna</option>
-          <option value="image">Gambar Custom</option>
+          <option value="image">Background Gambar</option>
         </select>
-        <input type="color" id="customColor" style="display:none; margin-top:6px;">
-        <input type="file" id="bgImageInput" accept="image/*" style="display:none; margin-top:6px;">
+        <input type="color" id="customColor" style="display:none; margin-top:5px;">
+        <input type="file" id="bgImageInput" accept="image/*" style="display:none; margin-top:5px;">
       </div>
 
-      <div class="form-group">
-        <label>Caption / Label Pesanan</label>
-        <textarea id="captionInput" rows="2" placeholder="Tulis caption..."></textarea>
+      <div class="control-group">
+        <label for="prefixInput">Catatan Awalan (Opsional)</label>
+        <input type="text" id="prefixInput" placeholder="Contoh: Cetak_SPK">
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; font-weight:600;">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <input type="checkbox" id="marginColorToggle" checked> Margin Warna
-        </label>
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <input type="checkbox" id="autoCaptionToggle"> Caption Otomatis
-        </label>
+    </div>
+
+    <div style="margin-top: 15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <label class="checkbox-group">
+        <input type="checkbox" id="marginColorToggle" checked>
+        <span>Gunakan Margin Berwarna (Tepi Kertas)</span>
+      </label>
+      
+      <div style="display:flex; gap:10px;">
+        <button id="resetBtn" class="btn btn-secondary">Reset</button>
+        <button id="savePDF" class="btn btn-success" style="font-size:15px; padding:10px 24px;">🚀 Simpan Semua PDF</button>
       </div>
     </div>
+  </div>
 
-    <hr style="border:0; border-top:1px solid var(--border-color);">
+  <!-- Alert Info -->
+  <div class="alert-info" id="downloadWarning" style="display:none;">
+    💡 <b>Sistem Cerdas:</b> Nama file PDF otomatis memuat mode cetak, ukuran cetak, warna background & jumlah lembar A3 untuk memudahkan identifikasi cetak.
+  </div>
 
-    <div style="display:flex; flex-direction:column; gap:10px;">
-      <button id="savePDF" class="btn btn-primary" style="width:100%;">
-        <i class="fa-solid fa-download"></i> Ekspor PDF Cetak
-      </button>
-      <button id="resetBtn" class="btn btn-danger" style="width:100%;">
-        <i class="fa-solid fa-rotate-left"></i> Reset
-      </button>
+  <!-- Progress Container -->
+  <div id="progressContainer">
+    <div class="progress-info">
+      <span id="progressText">Memproses...</span>
+      <span id="progressPercent">0%</span>
     </div>
-  </aside>
-
-  <!-- WORKSPACE PANEL -->
-  <main class="workspace">
-    <div class="status-banner">
-      <div class="stat-card">
-        <div class="stat-icon"><i class="fa-solid fa-print"></i></div>
-        <div class="stat-info">
-          <div class="label">Informasi Cetak Operator</div>
-          <div class="value" id="infoKeterangan">Belum ada foto diunggah</div>
-        </div>
-      </div>
-      <div id="folderName" style="font-size:13px; font-weight:700; color:var(--accent-color);"></div>
+    <div class="progress-track">
+      <div id="progressBar"></div>
     </div>
+  </div>
 
-    <div id="progressContainer">
-      <div class="progress-bg"><div id="progressBar"></div></div>
-      <div id="progressText">0%</div>
+  <!-- Batch Summary List -->
+  <div id="batchSummary" class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+      <div class="card-title" id="summaryTitle" style="margin-bottom: 0;">Daftar Antrean Folder</div>
+      <div id="statsBadges" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
     </div>
+    <div id="batchList" class="batch-list"></div>
+  </div>
 
-    <div id="preview"></div>
-  </main>
+  <div class="footer-info">
+    Polaroid Layout Automation Engine v2.6 (Modern UI + Fit To Sheet)
+  </div>
+
 </div>
-
-<div id="imgModal"><img id="modalImg" src="" alt="Preview Zoom"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
@@ -381,31 +546,36 @@
   const uploadFilesBtn = document.getElementById('uploadFilesBtn');
   const uploadFolder = document.getElementById('uploadFolder');
   const uploadFiles = document.getElementById('uploadFiles');
+  
+  const styleSelect = document.getElementById('styleSelect');
   const sizeSelect = document.getElementById('sizeSelect');
+  const fitSelect = document.getElementById('fitSelect');
   const bgSelect = document.getElementById('bgSelect');
   const customColor = document.getElementById('customColor');
   const bgImageInput = document.getElementById('bgImageInput');
-  const captionInput = document.getElementById('captionInput');
+  const marginColorToggle = document.getElementById('marginColorToggle');
+  const prefixInput = document.getElementById('prefixInput');
+  
   const saveBtn = document.getElementById('savePDF');
-  const quickSaveBtn = document.getElementById('quickSavePDF');
   const resetBtn = document.getElementById('resetBtn');
-  const previewDiv = document.getElementById('preview');
+  const darkToggle = document.getElementById('darkToggle');
+  
   const progressContainer = document.getElementById('progressContainer');
   const progressBar = document.getElementById('progressBar');
   const progressText = document.getElementById('progressText');
-  const infoKeterangan = document.getElementById('infoKeterangan');
-  const folderNameEl = document.getElementById('folderName');
-  const marginColorToggle = document.getElementById('marginColorToggle');
-  const darkToggle = document.getElementById('darkToggle');
-  const autoCaptionToggle = document.getElementById('autoCaptionToggle');
-  const imgModal = document.getElementById('imgModal');
-  const modalImg = document.getElementById('modalImg');
+  const progressPercent = document.getElementById('progressPercent');
+  
+  const batchSummary = document.getElementById('batchSummary');
+  const summaryTitle = document.getElementById('summaryTitle');
+  const batchList = document.getElementById('batchList');
+  const downloadWarning = document.getElementById('downloadWarning');
 
-  let currentFiles = [];
+  let allGroupedFiles = {}; 
+  let nameMapping = {}; 
+  let folderConfigs = {}; 
   let bgImageObj = null;
   const autoColors = ["#ff0000","#00b050","#0070c0","#7030a0","#FFDC00","#00EAFF","#ff69b4","#828282","#C28FF3","#91E7FF"];
-  let colorIndex = -1, currentColor = autoColors[0];
-
+  
   const layoutConfig = {
     "6x9": {margin:0.5, border:0.5, bottom:1.5, w:6, h:9, pageW:32, pageH:48},
     "8.9x12.7": {margin:0.6, border:0.6, bottom:1.6, w:8.9, h:12.7, pageW:32, pageH:48},
@@ -415,7 +585,34 @@
     "20.3x25.4": {margin:1.0, border:1.0, bottom:2.0, w:20.3, h:25.4, pageW:32, pageH:48},
     "25.4x30.5": {margin:1.2, border:1.2, bottom:2.2, w:25.4, h:30.5, pageW:32, pageH:48}
   };
-  function getLayoutConfig(){ return layoutConfig[sizeSelect && sizeSelect.value] || layoutConfig["6x9"]; }
+
+  const styleNameMap = {
+    "polaroid": "Polaroid",
+    "full": "Full Gambar"
+  };
+
+  const sizeNameMap = {
+    "6x9": "2R",
+    "8.9x12.7": "3R",
+    "10.2x15.2": "4R",
+    "12.7x17.8": "5R",
+    "15.2x20.3": "6R",
+    "20.3x25.4": "8R",
+    "25.4x30.5": "10R"
+  };
+
+  const bgNameMap = {
+    "white": "Putih",
+    "black": "Hitam",
+    "gray": "Abu",
+    "cream": "Cream",
+    "pink": "Pink",
+    "blue": "Biru",
+    "custom": "Custom",
+    "image": "Gambar"
+  };
+
+  function getLayoutConfig(sizeKey){ return layoutConfig[sizeKey] || layoutConfig["6x9"]; }
 
   function loadImage(src){
     return new Promise((resolve,reject)=>{
@@ -431,8 +628,23 @@
     return m ? [parseInt(m[1].substr(0,2),16), parseInt(m[1].substr(2,2),16), parseInt(m[1].substr(4,2),16)] : [0,0,0];
   }
 
-  function calculateOptimal(w,h){
-    const cfg = getLayoutConfig();
+  function getColorRgb(bgOpt, customHex) {
+    const colorMap = {
+      'white': [255, 255, 255],
+      'black': [0, 0, 0],
+      'gray': [128, 128, 128],
+      'cream': [255, 253, 208],
+      'pink': [255, 192, 203],
+      'blue': [65, 105, 225]
+    };
+    if (bgOpt === 'custom' && customHex) return hexToRgb(customHex);
+    if (colorMap[bgOpt]) return colorMap[bgOpt];
+    if (bgOpt && bgOpt.startsWith('#')) return hexToRgb(bgOpt);
+    return [255, 255, 255];
+  }
+
+  function calculateOptimal(w,h, sizeKey){
+    const cfg = getLayoutConfig(sizeKey);
     const margin = cfg.margin;
     const opts = [
       {pageW: cfg.pageW, pageH: cfg.pageH, w, h, orientation:'portrait'},
@@ -448,16 +660,133 @@
     return best;
   }
 
-  function toggleControlsLock(isLocked) {
-    const controls = document.querySelectorAll('button, select, input, textarea');
-    controls.forEach(el => el.disabled = isLocked);
-    if (previewDiv) previewDiv.style.pointerEvents = isLocked ? 'none' : 'auto';
+  function getPerPageCount(sizeKey) {
+    const cfg = getLayoutConfig(sizeKey);
+    const [w, h] = sizeKey.split('x').map(Number);
+    const margin = cfg.margin;
+    const opt = calculateOptimal(w, h, sizeKey);
+    const cols = Math.max(1, Math.floor((opt.pageW - 2 * margin) / opt.w));
+    const rows = Math.max(1, Math.floor((opt.pageH - 2 * margin) / opt.h));
+    return Math.max(1, cols * rows);
   }
 
-  async function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImgObjParam){
-    const styleSelect = document.getElementById('styleSelect');
-    const isFullImage = styleSelect && styleSelect.value === "full";
-    const {border, bottom} = getLayoutConfig();
+  // LOGIKA FIT TO SHEET (PEMBULATAN FOTO)
+  function getAdjustedFiles(rawFiles, sizeKey, fitMode) {
+    if (!rawFiles || rawFiles.length === 0) return [];
+    const perPage = getPerPageCount(sizeKey);
+    const total = rawFiles.length;
+    const remainder = total % perPage;
+
+    if (remainder === 0 || fitMode === 'asli') {
+      return [...rawFiles];
+    }
+
+    if (fitMode === 'fill') {
+      const needed = perPage - remainder;
+      const result = [...rawFiles];
+      for (let i = 0; i < needed; i++) {
+        result.push(rawFiles[i % total]); // Duplikat foto dari urutan awal
+      }
+      return result;
+    }
+
+    if (fitMode === 'trim') {
+      const validCount = Math.floor(total / perPage) * perPage;
+      if (validCount === 0) return [...rawFiles]; // Cegah terpotong sampai habis (0 foto)
+      return rawFiles.slice(0, validCount);
+    }
+
+    return [...rawFiles];
+  }
+
+  function calculateFolderSheets(photoCount, sizeKey) {
+    if (!photoCount || photoCount <= 0) return 0;
+    const perPage = getPerPageCount(sizeKey);
+    return Math.ceil(photoCount / perPage);
+  }
+
+  function detectConfigFromPath(path) {
+    const lower = path.toLowerCase();
+    let style = styleSelect.value;
+    let size = sizeSelect.value;
+    let fit = fitSelect.value;
+    let bg = bgSelect.value;
+    let detectedInfo = [];
+
+    if (lower.includes('full')) { style = 'full'; detectedInfo.push('Full'); }
+    else if (lower.includes('polaroid')) { style = 'polaroid'; detectedInfo.push('Polaroid'); }
+
+    if (/\b2r\b/.test(lower) || lower.includes('6x9')) { size = '6x9'; detectedInfo.push('2R'); }
+    else if (/\b3r\b/.test(lower) || lower.includes('8.9x12.7')) { size = '8.9x12.7'; detectedInfo.push('3R'); }
+    else if (/\b4r\b/.test(lower) || lower.includes('10.2x15.2')) { size = '10.2x15.2'; detectedInfo.push('4R'); }
+    else if (/\b5r\b/.test(lower) || lower.includes('12.7x17.8')) { size = '12.7x17.8'; detectedInfo.push('5R'); }
+    else if (/\b6r\b/.test(lower) || lower.includes('15.2x20.3')) { size = '15.2x20.3'; detectedInfo.push('6R'); }
+    else if (/\b8r\b/.test(lower) || lower.includes('20.3x25.4')) { size = '20.3x25.4'; detectedInfo.push('8R'); }
+    else if (/\b10r\b/.test(lower) || lower.includes('25.4x30.5')) { size = '25.4x30.5'; detectedInfo.push('10R'); }
+
+    if (lower.includes('hitam') || lower.includes('black')) { bg = 'black'; detectedInfo.push('Hitam'); }
+    else if (lower.includes('putih') || lower.includes('white')) { bg = 'white'; detectedInfo.push('Putih'); }
+    else if (lower.includes('abu') || lower.includes('gray')) { bg = 'gray'; detectedInfo.push('Abu-abu'); }
+    else if (lower.includes('cream') || lower.includes('krem')) { bg = 'cream'; detectedInfo.push('Cream'); }
+    else if (lower.includes('pink')) { bg = 'pink'; detectedInfo.push('Pink'); }
+    else if (lower.includes('biru') || lower.includes('blue')) { bg = 'blue'; detectedInfo.push('Biru'); }
+
+    return { style, size, fit, bg, isAutoDetected: detectedInfo.length > 0, detectedStr: detectedInfo.join(', ') };
+  }
+
+  function updateNameMapping() {
+    nameMapping = {};
+    const dirPaths = Object.keys(allGroupedFiles);
+    if (dirPaths.length === 0) return;
+
+    const rootMap = {};
+
+    dirPaths.forEach(path => {
+      const parts = path.split('/').filter(Boolean);
+      if (parts.length >= 2) {
+        const root = parts[0];
+        const spkDir = parts[1];
+
+        if (!rootMap[root]) rootMap[root] = {};
+        if (!rootMap[root][spkDir]) rootMap[root][spkDir] = [];
+        
+        if (!rootMap[root][spkDir].includes(path)) {
+          rootMap[root][spkDir].push(path);
+        }
+      }
+    });
+
+    for (const root in rootMap) {
+      const spkFolders = Object.keys(rootMap[root]).sort((a,b) => 
+        a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})
+      );
+
+      spkFolders.forEach((spkDir, spkIdx) => {
+        const spkLabel = `SPK ${spkIdx + 1}`;
+        
+        const photoFolders = rootMap[root][spkDir].sort((a,b) => 
+          a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})
+        );
+
+        photoFolders.forEach((photoPath, polaIdx) => {
+          const polaLabel = `Pola ${polaIdx + 1}`;
+          nameMapping[photoPath] = `${root}_${spkLabel}_${polaLabel}`;
+        });
+      });
+    }
+  }
+
+  function getSpkPolaName(path) {
+    if (!path || path === "Upload Langsung" || path === "Drop Foto") return "File_Satuan";
+    if (nameMapping[path]) return nameMapping[path];
+    
+    let parts = path.split('/').filter(Boolean);
+    return parts.join('_');
+  }
+
+  async function createPolaroid(img, W, H, dpi, bgOption, customCol, bgImgObjParam, currentStyle, sizeKey){
+    const isFullImage = currentStyle === "full";
+    const {border, bottom} = getLayoutConfig(sizeKey);
     
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(W * dpi);
@@ -480,27 +809,21 @@
       ctx.drawImage(drawImg, 0, 0, canvas.width, canvas.height);
     } else {
       if(bgOption === "image" && bgImgObjParam){
-        const bg = bgImgObjParam;
-        const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
-        const x = (canvas.width - bg.width * scale) / 2;
-        const y = (canvas.height - bg.height * scale) / 2;
-        ctx.drawImage(bg, x, y, bg.width * scale, bg.height * scale);
+        const scale = Math.max(canvas.width / bgImgObjParam.width, canvas.height / bgImgObjParam.height);
+        const x = (canvas.width - bgImgObjParam.width * scale) / 2;
+        const y = (canvas.height - bgImgObjParam.height * scale) / 2;
+        ctx.drawImage(bgImgObjParam, x, y, bgImgObjParam.width * scale, bgImgObjParam.height * scale);
       } else {
-        ctx.fillStyle = bgOption === "custom" ? customCol : bgOption;
+        const rgb = getColorRgb(bgOption, customCol);
+        ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
         ctx.fillRect(0,0,canvas.width,canvas.height);
       }
-
       const photoW = canvas.width - border * 2 * dpi;
       const photoH = canvas.height - (border + bottom) * dpi;
-      const photoX = border * dpi, photoY = border * dpi;
-      
-      const ratio = Math.min(photoW / drawImg.width, photoH / drawImg.height);
-      const drawW = drawImg.width * ratio, drawH = drawImg.height * ratio;
-      const offsetX = photoX + (photoW - drawW) / 2, offsetY = photoY + (photoH - drawH) / 2;
-      
-      ctx.drawImage(drawImg, offsetX, offsetY, drawW, drawH);
+      const offsetX = border * dpi + (photoW - (drawImg.width * Math.min(photoW / drawImg.width, photoH / drawImg.height))) / 2;
+      const offsetY = border * dpi + (photoH - (drawImg.height * Math.min(photoW / drawImg.width, photoH / drawImg.height))) / 2;
+      ctx.drawImage(drawImg, offsetX, offsetY, drawImg.width * Math.min(photoW / drawImg.width, photoH / drawImg.height), drawImg.height * Math.min(photoW / drawImg.width, photoH / drawImg.height));
     }
-
     return canvas.toDataURL("image/jpeg", 0.92);
   }
 
@@ -510,409 +833,400 @@
     return arr;
   }
 
-  function updateFolderName(){
-    if(!folderNameEl) return;
-    if(!currentFiles.length){ folderNameEl.textContent = ""; return; }
-    const f0 = currentFiles[0];
-    if(f0 && f0.webkitRelativePath){
-      const parts = f0.webkitRelativePath.split('/');
-      if(parts.length > 1) folderNameEl.textContent = `📁 ${parts[0]}`;
-      else folderNameEl.textContent = "";
-    } else { folderNameEl.textContent = ""; }
-  }
+  function updateTotalSummary() {
+    const dirs = Object.keys(allGroupedFiles);
+    let totalFotos = 0;
+    let totalLembar = 0;
 
-  function updateKeterangan(){
-    if(!infoKeterangan) return;
-    if(!currentFiles.length){ infoKeterangan.textContent = "Belum ada foto diunggah"; return; }
-    const parts = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-    const w = parts[0], h = parts[1];
-    const opt = calculateOptimal(w,h);
-    const {margin} = getLayoutConfig();
-    const cols = Math.max(1, Math.floor((opt.pageW - 2*margin) / opt.w));
-    const rows = Math.max(1, Math.floor((opt.pageH - 2*margin) / opt.h));
-    const perPage = Math.max(1, cols * rows);
-    const lembar = Math.ceil(currentFiles.length / perPage);
-    infoKeterangan.textContent = `${currentFiles.length} foto = ${lembar} lembar (${perPage} foto/lembar)`;
-  }
-
-  if(captionInput){
-    captionInput.addEventListener('input', ()=>{ captionInput.dataset.manual = "true"; });
-  }
-  if(autoCaptionToggle){
-    autoCaptionToggle.addEventListener('change', ()=>{
-      if(autoCaptionToggle.checked){
-        if(captionInput) captionInput.dataset.manual = "";
-        updateAutoCaption(true);
-      } else {
-        if(captionInput && captionInput.dataset.manual !== "true"){
-          captionInput.value = "";
-          captionInput.dataset.manual = "";
-        }
-      }
+    dirs.forEach(d => {
+      const cfg = folderConfigs[d] || detectConfigFromPath(d);
+      const adjustedFiles = getAdjustedFiles(allGroupedFiles[d], cfg.size, cfg.fit);
+      totalFotos += adjustedFiles.length;
+      totalLembar += calculateFolderSheets(adjustedFiles.length, cfg.size);
     });
-  }
 
-  function updateAutoCaption(force=false){
-    if(!autoCaptionToggle || !autoCaptionToggle.checked) return;
-    if(currentFiles.length === 0) return;
-    if(captionInput && captionInput.dataset && captionInput.dataset.manual === "true" && !force) return;
-
-    let folder = "Folder";
-    if(currentFiles[0] && currentFiles[0].webkitRelativePath){
-      const parts = currentFiles[0].webkitRelativePath.split('/');
-      if(parts.length > 1) folder = parts[0];
+    if (summaryTitle) {
+      summaryTitle.textContent = `Daftar Antrean Folder`;
     }
-    const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-    const opt = calculateOptimal(w,h);
-    const {margin} = getLayoutConfig();
-    const cols = Math.max(1, Math.floor((opt.pageW - 2*margin) / opt.w));
-    const rows = Math.max(1, Math.floor((opt.pageH - 2*margin) / opt.h));
-    const perPage = Math.max(1, cols * rows);
-    const lembar = Math.ceil(currentFiles.length / perPage);
-    if(captionInput) captionInput.value = `${folder} = ${lembar} lembar A3`;
-  }
 
-  if(sizeSelect){
-    sizeSelect.addEventListener('change', ()=>{
-      updateKeterangan();
-      updateAutoCaption();
-    });
-  }
-
-  if(bgSelect){
-    bgSelect.addEventListener('change', ()=>{
-      customColor.style.display = bgSelect.value === "custom" ? "block" : "none";
-      bgImageInput.style.display = bgSelect.value === "image" ? "block" : "none";
-    });
-  }
-
-  function createCardElement(dataUrl, fileName) {
-    const card = document.createElement('div');
-    card.className = 'thumb-card';
-
-    const thumb = document.createElement('img');
-    thumb.src = dataUrl;
-    thumb.title = fileName;
-
-    const actions = document.createElement('div');
-    actions.className = 'thumb-actions';
-
-    const dupBtn = document.createElement('button');
-    dupBtn.className = 'thumb-btn btn-dup';
-    dupBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-    dupBtn.onclick = (e) => { e.stopPropagation(); duplicateCardDirect(card); };
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'thumb-btn btn-del';
-    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-    delBtn.onclick = (e) => { e.stopPropagation(); deleteCardDirect(card); };
-
-    actions.appendChild(dupBtn);
-    actions.appendChild(delBtn);
-    card.appendChild(thumb);
-    card.appendChild(actions);
-
-    return card;
-  }
-
-  async function duplicateCardDirect(cardElement) {
-    const index = Array.from(previewDiv.children).indexOf(cardElement);
-    if (index === -1) return;
-
-    const fileToDup = currentFiles[index];
-    currentFiles.splice(index + 1, 0, fileToDup);
-
-    let objectUrl = null;
-    try {
-      objectUrl = URL.createObjectURL(fileToDup);
-      const img = await loadImage(objectUrl);
-      const [w, h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-      const data = await createPolaroid(img, w, h, 96, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
-
-      const newCard = createCardElement(data, fileToDup.name);
-      cardElement.after(newCard);
-      
-      updateKeterangan();
-      updateAutoCaption();
-    } catch(err) {
-      console.error("Gagal duplikat foto:", err);
-    } finally {
-      if(objectUrl) URL.revokeObjectURL(objectUrl);
+    const statsBadges = document.getElementById('statsBadges');
+    if (statsBadges) {
+      statsBadges.innerHTML = `
+        <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: var(--primary-light); color: var(--primary);">📁 ${dirs.length} Folder</span>
+        <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: var(--primary-light); color: var(--primary);">🖼️ ${totalFotos} Foto</span>
+        <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: rgba(16, 185, 129, 0.15); color: #059669;">📄 ${totalLembar} Lembar A3</span>
+      `;
     }
   }
 
-  function deleteCardDirect(cardElement) {
-    const index = Array.from(previewDiv.children).indexOf(cardElement);
-    if (index === -1) return;
-
-    currentFiles.splice(index, 1);
-    cardElement.remove();
+  function renderBatchSummary() {
+    updateNameMapping();
+    const dirs = Object.keys(allGroupedFiles);
+    batchList.innerHTML = "";
     
-    updateKeterangan();
-    updateAutoCaption();
+    if(dirs.length === 0) {
+      batchSummary.style.display = "none";
+      downloadWarning.style.display = "none";
+      return;
+    }
+
+    dirs.forEach(d => {
+      let rawFileCount = allGroupedFiles[d].length;
+      let finalName = getSpkPolaName(d);
+      
+      let pathParts = d.split('/').filter(Boolean);
+      let originalName = pathParts.length > 0 ? pathParts[pathParts.length - 1] : d;
+      
+      if(!folderConfigs[d]) {
+        folderConfigs[d] = detectConfigFromPath(d);
+      }
+
+      const cfg = folderConfigs[d];
+      const adjustedFiles = getAdjustedFiles(allGroupedFiles[d], cfg.size, cfg.fit);
+      const adjustedCount = adjustedFiles.length;
+      const initialLembar = calculateFolderSheets(adjustedCount, cfg.size);
+
+      const item = document.createElement('div');
+      item.className = 'batch-item';
+      let safeId = 'batch-item-' + d.replace(/[^a-zA-Z0-9]/g, '_');
+      item.id = safeId;
+      
+      let countText = adjustedCount !== rawFileCount 
+        ? `<b>${rawFileCount} Foto</b> ➔ <b style="color:var(--primary);">${adjustedCount} Foto</b>`
+        : `<b>${rawFileCount} Foto</b>`;
+
+      item.innerHTML = `
+        <div class="batch-name-container">
+          <span class="batch-name" title="${d}">📁 ${finalName}</span>
+          <div class="original-name">Asli: ${originalName} • <span id="photo-count-${safeId}">${countText}</span> (<span id="lembar-count-${safeId}" style="color: var(--primary); font-weight: 600;">${initialLembar} Lembar A3</span>) ${cfg.isAutoDetected ? `<span class="detected-tag">⚡ ${cfg.detectedStr}</span>` : ''}</div>
+        </div>
+        <div class="batch-controls">
+          <select id="style-${safeId}" title="Mode Cetak">
+            <option value="polaroid" ${cfg.style === 'polaroid' ? 'selected' : ''}>Polaroid</option>
+            <option value="full" ${cfg.style === 'full' ? 'selected' : ''}>Full Gambar</option>
+          </select>
+          <select id="size-${safeId}" title="Ukuran Cetak">
+            <option value="6x9" ${cfg.size === '6x9' ? 'selected' : ''}>2R (6x9)</option>
+            <option value="8.9x12.7" ${cfg.size === '8.9x12.7' ? 'selected' : ''}>3R</option>
+            <option value="10.2x15.2" ${cfg.size === '10.2x15.2' ? 'selected' : ''}>4R</option>
+            <option value="12.7x17.8" ${cfg.size === '12.7x17.8' ? 'selected' : ''}>5R</option>
+            <option value="15.2x20.3" ${cfg.size === '15.2x20.3' ? 'selected' : ''}>6R</option>
+            <option value="20.3x25.4" ${cfg.size === '20.3x25.4' ? 'selected' : ''}>8R</option>
+            <option value="25.4x30.5" ${cfg.size === '25.4x30.5' ? 'selected' : ''}>10R</option>
+          </select>
+          <select id="fit-${safeId}" title="Atur Genap Lembar">
+            <option value="asli" ${cfg.fit === 'asli' ? 'selected' : ''}>Asli</option>
+            <option value="fill" ${cfg.fit === 'fill' ? 'selected' : ''}>⚡ Genapkan</option>
+            <option value="trim" ${cfg.fit === 'trim' ? 'selected' : ''}>✂️ Potong</option>
+          </select>
+          <select id="bg-${safeId}" title="Background">
+            <option value="white" ${cfg.bg === 'white' ? 'selected' : ''}>Putih</option>
+            <option value="black" ${cfg.bg === 'black' ? 'selected' : ''}>Hitam</option>
+            <option value="gray" ${cfg.bg === 'gray' ? 'selected' : ''}>Abu-abu</option>
+            <option value="cream" ${cfg.bg === 'cream' ? 'selected' : ''}>Cream</option>
+            <option value="pink" ${cfg.bg === 'pink' ? 'selected' : ''}>Pink</option>
+            <option value="blue" ${cfg.bg === 'blue' ? 'selected' : ''}>Biru</option>
+          </select>
+        </div>
+        <span class="status-badge" id="status-${safeId}">Menunggu</span>
+      `;
+      batchList.appendChild(item);
+
+      const refreshRowUI = () => {
+        const currentCfg = folderConfigs[d];
+        const adjFiles = getAdjustedFiles(allGroupedFiles[d], currentCfg.size, currentCfg.fit);
+        const newCount = adjFiles.length;
+        const newLembar = calculateFolderSheets(newCount, currentCfg.size);
+        
+        const photoEl = document.getElementById(`photo-count-${safeId}`);
+        if (photoEl) {
+          photoEl.innerHTML = newCount !== rawFileCount 
+            ? `<b>${rawFileCount} Foto</b> ➔ <b style="color:var(--primary);">${newCount} Foto</b>`
+            : `<b>${rawFileCount} Foto</b>`;
+        }
+        
+        const lembarEl = document.getElementById(`lembar-count-${safeId}`);
+        if (lembarEl) lembarEl.textContent = `${newLembar} Lembar A3`;
+        
+        updateTotalSummary();
+      };
+
+      document.getElementById(`style-${safeId}`).addEventListener('change', (e) => {
+        folderConfigs[d].style = e.target.value;
+        updateTotalSummary();
+      });
+
+      document.getElementById(`size-${safeId}`).addEventListener('change', (e) => {
+        folderConfigs[d].size = e.target.value;
+        refreshRowUI();
+      });
+
+      document.getElementById(`fit-${safeId}`).addEventListener('change', (e) => {
+        folderConfigs[d].fit = e.target.value;
+        refreshRowUI();
+      });
+
+      document.getElementById(`bg-${safeId}`).addEventListener('change', (e) => {
+        folderConfigs[d].bg = e.target.value;
+        updateTotalSummary();
+      });
+    });
+
+    updateTotalSummary();
+    batchSummary.style.display = "block";
+    downloadWarning.style.display = "flex";
   }
 
-  async function renderPreviewForFiles(filesArr){
-    currentFiles = [];
-    
-    if(progressContainer) progressContainer.style.display = "block";
-    if(progressBar) progressBar.style.width = "0%";
-    if(progressText) progressText.textContent = "Menyiapkan file... (0%)";
+  if(styleSelect) styleSelect.addEventListener('change', ()=>{ Object.keys(folderConfigs).forEach(k=>folderConfigs[k].style = styleSelect.value); renderBatchSummary(); });
+  if(sizeSelect) sizeSelect.addEventListener('change', ()=>{ Object.keys(folderConfigs).forEach(k=>folderConfigs[k].size = sizeSelect.value); renderBatchSummary(); });
+  if(fitSelect) fitSelect.addEventListener('change', ()=>{ Object.keys(folderConfigs).forEach(k=>folderConfigs[k].fit = fitSelect.value); renderBatchSummary(); });
+  if(bgSelect) bgSelect.addEventListener('change', ()=>{ 
+    customColor.style.display = bgSelect.value === "custom" ? "inline-block" : "none";
+    bgImageInput.style.display = bgSelect.value === "image" ? "inline-block" : "none";
+    Object.keys(folderConfigs).forEach(k=>folderConfigs[k].bg = bgSelect.value); 
+    renderBatchSummary(); 
+  });
 
-    const totalFiles = filesArr.length;
-
-    for(let f = 0; f < totalFiles; f++) {
-      let file = filesArr[f];
-      let fileName = file.name ? file.name.toLowerCase() : '';
-      
-      const isHeicOrHeif = fileName.endsWith('.heic') || fileName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
-
-      if(isHeicOrHeif) {
-        try {
-          let convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.7 });
-          if(Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
-          const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-          file = new File([convertedBlob], newName, { type: "image/jpeg" });
-        } catch(err) {
-          console.error("Gagal konversi HEIF/HEIC:", file.name, err);
-        }
-      }
-      currentFiles.push(file);
-
-      let percentConv = Math.round(((f + 1) / totalFiles) * 40);
-      if(progressBar) progressBar.style.width = percentConv + '%';
-      if(progressText) progressText.textContent = `Memproses file ${f + 1} dari ${totalFiles} (${percentConv}%)`;
-    }
-
-    previewDiv.innerHTML = "";
-    updateFolderName();
-    updateKeterangan();
-    updateAutoCaption();
-
-    if(currentFiles.length > 0){
-      colorIndex = (colorIndex + 1) % autoColors.length;
-      currentColor = autoColors[colorIndex];
-    }
-
-    for(let i=0; i<currentFiles.length; i++){
-      const file = currentFiles[i];
-      let objectUrl = null;
-      try{
-        objectUrl = URL.createObjectURL(file);
-        const img = await loadImage(objectUrl);
-        const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-        
-        const data = await createPolaroid(img, w, h, 96, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
-        
-        const card = createCardElement(data, file.name);
-        previewDiv.appendChild(card);
-      }catch(err){
-        console.error("Preview load failed:", file && file.name, err);
-      }finally{
-        if(objectUrl) URL.revokeObjectURL(objectUrl);
-      }
-
-      let percentRender = 40 + Math.round(((i + 1) / currentFiles.length) * 60);
-      if(progressBar) progressBar.style.width = percentRender + '%';
-      if(progressText) progressText.textContent = `Membuat preview ${i + 1} dari ${currentFiles.length} (${percentRender}%)`;
-    }
-
-    updateKeterangan();
-
-    setTimeout(() => {
-      if(progressContainer) progressContainer.style.display = "none";
-      if(progressBar) progressBar.style.width = "0%";
-      if(progressText) progressText.textContent = "0%";
-    }, 400);
+  if(bgImageInput){
+    bgImageInput.addEventListener('change', (e)=>{
+      bgImageObj = null;
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const r = new FileReader();
+      r.onload = async (ev)=>{
+        try{ bgImageObj = await loadImage(ev.target.result); } catch(err){ bgImageObj = null; }
+      };
+      r.readAsDataURL(file);
+    });
   }
 
   if(uploadFolderBtn && uploadFolder){
     uploadFolderBtn.addEventListener('click', ()=>{ uploadFolder.value = ""; uploadFolder.click(); });
-    uploadFolder.addEventListener('change', async (e)=>{
+    uploadFolder.addEventListener('change', (e)=>{
       const filesArr = fileListToArray(e.target.files || []);
-      filesArr.sort((a,b)=>{
+      const imageFiles = filesArr.filter(f => f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.heic') || f.name.toLowerCase().endsWith('.heif'));
+
+      imageFiles.sort((a,b)=>{
         const pa = a.webkitRelativePath || a.name;
         const pb = b.webkitRelativePath || b.name;
         return pa.localeCompare(pb, undefined, {numeric:true, sensitivity:'base'});
       });
-      await renderPreviewForFiles(filesArr);
+
+      allGroupedFiles = {};
+      folderConfigs = {};
+      imageFiles.forEach(file => {
+          let path = file.webkitRelativePath;
+          let dir = path ? path.substring(0, path.lastIndexOf('/')) : "Upload Langsung";
+          if(!allGroupedFiles[dir]) allGroupedFiles[dir] = [];
+          allGroupedFiles[dir].push(file);
+      });
+      renderBatchSummary();
     });
   }
 
   if(uploadFilesBtn && uploadFiles){
     uploadFilesBtn.addEventListener('click', ()=>{ uploadFiles.value = ""; uploadFiles.click(); });
-    uploadFiles.addEventListener('change', async (e)=>{
+    uploadFiles.addEventListener('change', (e)=>{
       const filesArr = fileListToArray(e.target.files || []);
-      await renderPreviewForFiles(filesArr);
+      allGroupedFiles = { "Upload Langsung": filesArr };
+      folderConfigs = {};
+      renderBatchSummary();
     });
   }
 
-  // EKSPOR PDF CETAK
+  function toggleControlsLock(isLocked) {
+    const controls = document.querySelectorAll('button, select, input');
+    controls.forEach(el => el.disabled = isLocked);
+  }
+
+  async function processAndDownloadPDF(rawFiles, combinedNameStr, cfg) {
+    // PROSES FIT TO SHEET (DUPLIKAT / TRIMMING FOTO)
+    const targetRawFiles = getAdjustedFiles(rawFiles, cfg.size, cfg.fit);
+
+    let readyFiles = [];
+    for(let i=0; i<targetRawFiles.length; i++) {
+      let file = targetRawFiles[i];
+      let fname = file.name.toLowerCase();
+      if(fname.endsWith('.heic') || fname.endsWith('.heif') || file.type === 'image/heic') {
+        try {
+          let convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.7 });
+          if(Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
+          file = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
+        } catch(err) {
+          console.error("Gagal HEIC:", file.name, err);
+          continue; 
+        }
+      }
+      readyFiles.push(file);
+    }
+
+    if (readyFiles.length === 0) return { success: false, lembar: 0 };
+
+    const sizeKey = cfg.size;
+    const [w,h] = sizeKey.split('x').map(Number);
+    const {margin} = getLayoutConfig(sizeKey);
+    const opt = calculateOptimal(w,h, sizeKey);
+    const pdf = new jsPDF({unit:'cm', format:[opt.pageW, opt.pageH], orientation: opt.orientation});
+    const cols = Math.max(1, Math.floor((opt.pageW - 2*margin) / opt.w));
+    const rows = Math.max(1, Math.floor((opt.pageH - 2*margin) / opt.h));
+    const perPage = Math.max(1, cols * rows);
+    const lembar = Math.ceil(readyFiles.length / perPage);
+
+    const styleLabel = styleNameMap[cfg.style] || (cfg.style === 'full' ? 'Full Gambar' : 'Polaroid');
+    const sizeLabel = sizeNameMap[cfg.size] || cfg.size;
+    const bgLabel = bgNameMap[cfg.bg] || cfg.bg;
+
+    let prefix = prefixInput.value.trim();
+    let finalCaption = prefix ? `${prefix} ${combinedNameStr}` : combinedNameStr;
+    const safeCaption = finalCaption.replace(/[\\\/:*?"<>|\r\n]/g,"_");
+    
+    // FORMAT NAMA FILE PDF BARU
+    const fileName = `${safeCaption} - ${styleLabel} - ${sizeLabel} - ${bgLabel} - ${lembar} lembar.pdf`;
+    
+    const pageBgRgb = getColorRgb(cfg.bg, customColor ? customColor.value : null);
+    const [marR, marG, marB] = autoColors[Math.floor(Math.random() * autoColors.length)].match(/\w\w/g).map(x=>parseInt(x,16));
+
+    const bgLuminance = (pageBgRgb[0] * 299 + pageBgRgb[1] * 587 + pageBgRgb[2] * 114) / 1000;
+    const markColor = bgLuminance < 128 ? [255, 255, 255] : [0, 0, 0];
+
+    for(let i=0; i<readyFiles.length; i+=perPage){
+      if(i>0) pdf.addPage();
+      const pageFiles = readyFiles.slice(i, i+perPage);
+      const totalW = cols * opt.w, totalH = rows * opt.h;
+      const left = margin + (opt.pageW - 2*margin - totalW)/2;
+      const top = margin + (opt.pageH - 2*margin - totalH)/2;
+
+      if(cfg.bg !== "image") {
+        pdf.setFillColor(pageBgRgb[0], pageBgRgb[1], pageBgRgb[2]);
+        pdf.rect(0, 0, opt.pageW, opt.pageH, "F"); 
+      }
+
+      if(marginColorToggle.checked){
+        pdf.setFillColor(marR, marG, marB);
+        pdf.rect(0, 0, opt.pageW, margin, "F");                   
+        pdf.rect(0, 0, margin, opt.pageH, "F");                   
+        pdf.rect(opt.pageW - margin, 0, margin, opt.pageH, "F");  
+        pdf.rect(0, opt.pageH - margin, opt.pageW, margin, "F");  
+      }
+
+      pdf.setLineWidth(0.02);
+      pdf.setDrawColor(markColor[0], markColor[1], markColor[2]); 
+      pdf.setTextColor(markColor[0], markColor[1], markColor[2]); 
+
+      for(let c=0;c<=cols;c++){
+        const x = left + c * opt.w;
+        pdf.line(x, top - 0.7, x, top - 0.2);
+        pdf.line(x, top + totalH + 0.2, x, top + totalH + 0.7);
+      }
+      for(let r=0;r<=rows;r++){
+        const y = top + r * opt.h;
+        pdf.line(left - 0.7, y, left - 0.2, y);
+        pdf.line(left + totalW + 0.2, y, left + totalW + 0.7, y);
+      }
+
+      const captionText = `${finalCaption} (${styleLabel} - ${sizeLabel} - ${bgLabel}) - ${lembar} lembar`;
+      pdf.setFontSize(14);
+      pdf.text(captionText, opt.pageW/2, top + totalH + 1.2, {align: "center"});
+
+      for(let idx=0; idx<pageFiles.length; idx++){
+        const file = pageFiles[idx];
+        let objectUrl = null;
+        try{
+          objectUrl = URL.createObjectURL(file);
+          const img = await loadImage(objectUrl);
+          const data = await createPolaroid(img, opt.w, opt.h, 200, cfg.bg, customColor.value, bgImageObj, cfg.style, sizeKey);
+          
+          const col = idx % cols;
+          const row = Math.floor(idx / cols);
+          pdf.addImage(data, 'JPEG', left + col * opt.w, top + row * opt.h, opt.w, opt.h, 'img_'+Date.now()+'_'+idx, 'FAST');
+        }catch(err){
+          console.error("Gagal menempatkan foto ke PDF", err);
+        }finally{
+          if(objectUrl) URL.revokeObjectURL(objectUrl);
+        }
+      }
+    }
+
+    pdf.save(fileName);
+    return { success: true, lembar: lembar };
+  }
+
   if(saveBtn){
     saveBtn.addEventListener('click', async ()=>{
-      try{
-        if(!currentFiles.length) return alert("Upload foto dulu!");
-        if(typeof jsPDF === 'undefined') return alert('Library jsPDF tidak tersedia.');
+      const dirs = Object.keys(allGroupedFiles);
+      if(dirs.length === 0) return alert("Upload folder dulu!");
+      if(typeof jsPDF === 'undefined') return alert('Library jsPDF tidak tersedia.');
 
-        toggleControlsLock(true);
+      toggleControlsLock(true);
+      progressContainer.style.display = "block";
 
-        const [w,h] = (sizeSelect && sizeSelect.value || "6x9").split('x').map(Number);
-        const {margin} = getLayoutConfig();
-        const opt = calculateOptimal(w,h);
-        const pdf = new jsPDF({unit:'cm', format:[opt.pageW, opt.pageH], orientation: opt.orientation});
-        const cols = Math.max(1, Math.floor((opt.pageW - 2*margin) / opt.w));
-        const rows = Math.max(1, Math.floor((opt.pageH - 2*margin) / opt.h));
-        const perPage = Math.max(1, cols * rows);
+      let totalPdfSaved = 0;
+      let totalLembarSaved = 0;
 
-        if(progressContainer) progressContainer.style.display = "block";
-        if(progressBar) progressBar.style.width = "0%";
-        if(progressText) progressText.textContent = "0%";
-
-        let done = 0;
-        const total = currentFiles.length;
-        const lembar = Math.ceil(total / perPage);
+      for(let d=0; d<dirs.length; d++){
+        let dirPath = dirs[d];
+        let files = allGroupedFiles[dirPath];
+        let cfg = folderConfigs[dirPath] || detectConfigFromPath(dirPath);
         
-        const rawCaption = (captionInput && captionInput.value.trim()) || "polaroid";
-        const captionText = `${rawCaption} - ${lembar} lembar`;
-        const safeCaption = rawCaption.replace(/[\\\/:*?"<>|]/g,"_");
-        const fileName = `${safeCaption} - ${lembar} lembar.pdf`;
-
-        for(let i=0;i<currentFiles.length;i+=perPage){
-          if(i>0) pdf.addPage();
-          const pageFiles = currentFiles.slice(i, i+perPage);
-          const totalW = cols * opt.w, totalH = rows * opt.h;
-          const left = margin + (opt.pageW - 2*margin - totalW)/2;
-          const top = margin + (opt.pageH - 2*margin - totalH)/2;
-
-          let pageBgRgb = [255, 255, 255]; 
-
-          const bgOpt = bgSelect ? bgSelect.value : "white";
-          if(bgOpt !== "image") {
-            let colorStr = (bgOpt === "custom" && customColor) ? customColor.value : bgOpt;
-            if(colorStr.toLowerCase() === "cream") colorStr = "#FFFDD0"; 
-
-            if (colorStr.startsWith('#')) {
-              pageBgRgb = hexToRgb(colorStr);
-            } else {
-              const tempDiv = document.createElement('div');
-              tempDiv.style.color = colorStr;
-              document.body.appendChild(tempDiv);
-              const computed = window.getComputedStyle(tempDiv).color;
-              document.body.removeChild(tempDiv);
-              const match = computed.match(/\d+/g);
-              if (match && match.length >= 3) {
-                pageBgRgb = [parseInt(match[0]), parseInt(match[1]), parseInt(match[2])];
-              }
-            }
-
-            pdf.setFillColor(pageBgRgb[0], pageBgRgb[1], pageBgRgb[2]);
-            pdf.rect(0, 0, opt.pageW, opt.pageH, "F"); 
-          }
-
-          if(marginColorToggle && marginColorToggle.checked){
-            const [r,g,b] = hexToRgb(currentColor);
-            pdf.setFillColor(r,g,b);
-            pdf.rect(0,0,opt.pageW,margin,"F");
-            pdf.rect(0,0,margin,opt.pageH,"F");
-            pdf.rect(opt.pageW-margin,0,margin,opt.pageH,"F");
-          }
-
-          pdf.setLineWidth(0.02);
-          const brightness = (pageBgRgb[0] * 299 + pageBgRgb[1] * 587 + pageBgRgb[2] * 114) / 1000;
-          
-          if (brightness < 128 || (marginColorToggle && marginColorToggle.checked && currentColor === "#000000")) {
-            pdf.setDrawColor(200, 200, 200); 
-            pdf.setTextColor(255, 255, 255); 
-          } else {
-            pdf.setDrawColor(0, 0, 0); 
-            pdf.setTextColor(0, 0, 0); 
-          }
-
-          for(let c=0;c<=cols;c++){
-            const x = left + c * opt.w;
-            pdf.line(x, top - 0.7, x, top - 0.2);
-            pdf.line(x, top + totalH + 0.2, x, top + totalH + 0.7);
-          }
-          for(let r=0;r<=rows;r++){
-            const y = top + r * opt.h;
-            pdf.line(left - 0.7, y, left - 0.2, y);
-            pdf.line(left + totalW + 0.2, y, left + totalW + 0.7, y);
-          }
-
-          pdf.setFontSize(14);
-          pdf.text(captionText, opt.pageW/2, top + totalH + 1.2, {align: "center"});
-          pdf.setTextColor(0, 0, 0);
-
-          for(let idx=0; idx<pageFiles.length; idx++){
-            const file = pageFiles[idx];
-            let objectUrl = null;
-            try{
-              objectUrl = URL.createObjectURL(file);
-              const img = await loadImage(objectUrl);
-              const data = await createPolaroid(img, opt.w, opt.h, 200, (bgSelect && bgSelect.value) || "white", (customColor && customColor.value) || "#ffffff", bgImageObj);
-              
-              const col = idx % cols;
-              const row = Math.floor(idx / cols);
-              const imgAlias = 'img_' + Date.now() + '_' + idx;
-              
-              pdf.addImage(data, 'JPEG', left + col * opt.w, top + row * opt.h, opt.w, opt.h, imgAlias, 'FAST');
-            }catch(err){
-              console.error("Failed to render PDF image:", file && file.name, err);
-            }finally{
-              if(objectUrl) URL.revokeObjectURL(objectUrl);
-            }
-            done++;
-            const p = Math.min(100, Math.round(done / total * 100));
-            if(progressBar) progressBar.style.width = p + '%';
-            if(progressText) progressText.textContent = p + '%';
-          }
+        let combinedNameStr = getSpkPolaName(dirPath);
+        
+        let safeId = 'batch-item-' + dirPath.replace(/[^a-zA-Z0-9]/g, '_');
+        let statusEl = document.getElementById('status-' + safeId);
+        if(statusEl) {
+          statusEl.textContent = "Diproses...";
+          statusEl.className = "status-badge";
         }
 
-        setTimeout(()=>{
-          pdf.save(fileName);
-          if(progressContainer) progressContainer.style.display = "none";
-          if(progressBar) progressBar.style.width = "0%";
-          if(progressText) progressText.textContent = "0%";
-          updateKeterangan();
-          
-          toggleControlsLock(false);
-        }, 120);
+        let percent = Math.round(((d) / dirs.length) * 100);
+        progressText.textContent = `Membuat PDF: ${combinedNameStr} (${d+1}/${dirs.length})`;
+        progressBar.style.width = percent + "%";
+        progressPercent.textContent = percent + "%";
 
-      }catch(err){
-        console.error('save error', err);
-        alert('Terjadi kesalahan saat menyimpan PDF.');
-        toggleControlsLock(false);
+        let result = await processAndDownloadPDF(files, combinedNameStr, cfg);
+
+        if(statusEl) {
+          statusEl.textContent = result.success ? "Selesai ✓" : "Gagal";
+          statusEl.className = result.success ? "status-badge done" : "status-badge error";
+        }
+
+        if(result.success) {
+          totalPdfSaved++;
+          totalLembarSaved += result.lembar;
+        }
+
+        percent = Math.round(((d+1) / dirs.length) * 100);
+        progressBar.style.width = percent + "%";
+        progressPercent.textContent = percent + "%";
+
+        if (d < dirs.length - 1) {
+          await new Promise(r => setTimeout(r, 1200));
+        }
       }
-    });
-  }
 
-  // Quick Save Trigger
-  if(quickSaveBtn && saveBtn){
-    quickSaveBtn.addEventListener('click', () => saveBtn.click());
+      progressText.textContent = `🎉 Selesai! ${totalPdfSaved} PDF (${totalLembarSaved} Lembar A3) Berhasil Disimpan!`;
+      setTimeout(()=>{
+        progressContainer.style.display = "none";
+        progressBar.style.width = "0%";
+        toggleControlsLock(false);
+      }, 4000);
+    });
   }
 
   if(resetBtn){
     resetBtn.addEventListener('click', ()=>{
-      currentFiles = [];
-      if(previewDiv) previewDiv.innerHTML = "";
-      if(captionInput) { captionInput.value = ""; captionInput.dataset.manual = ""; }
+      allGroupedFiles = {};
+      nameMapping = {};
+      folderConfigs = {};
       if(uploadFolder) uploadFolder.value = "";
       if(uploadFiles) uploadFiles.value = "";
-      if(bgSelect) bgSelect.value = "white";
-      if(customColor) customColor.value = "#ffffff";
-      if(marginColorToggle) marginColorToggle.checked = true;
-      if(autoCaptionToggle) autoCaptionToggle.checked = false;
-      bgImageObj = null;
       if(bgImageInput) bgImageInput.value = "";
-      if(folderNameEl) folderNameEl.textContent = "";
-      updateKeterangan();
-      if(progressContainer) progressContainer.style.display = "none";
-      if(progressBar) progressBar.style.width = "0%";
-      if(progressText) progressText.textContent = "0%";
+      if(prefixInput) prefixInput.value = "";
+      renderBatchSummary();
+      progressContainer.style.display = "none";
+      progressBar.style.width = "0%";
     });
   }
 
-  // Dark Mode Toggle
   window.addEventListener('DOMContentLoaded', ()=>{
     try{ if(localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode'); }catch(e){}
   });
@@ -923,71 +1237,15 @@
     });
   }
 
-  // Modal Zoom
-  if(previewDiv && imgModal && modalImg){
-    previewDiv.addEventListener('click', (e)=>{
-      if(e.target && e.target.tagName === 'IMG'){
-        modalImg.src = e.target.src;
-        imgModal.style.display = 'flex';
-      }
-    });
-    imgModal.addEventListener('click', (e)=>{ if(e.target === imgModal) imgModal.style.display = 'none'; });
-  }
-
-  // Shortcuts Operator
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && imgModal && imgModal.style.display === 'flex') {
-      imgModal.style.display = 'none';
-      return;
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-      e.preventDefault();
-      if (saveBtn) saveBtn.click();
-      return;
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
-      e.preventDefault();
-      if (uploadFilesBtn) uploadFilesBtn.click();
-      return;
-    }
-  });
-
-  // Re-render saat opsi diubah
-  const styleSelect = document.getElementById('styleSelect');
-  [styleSelect, bgSelect, customColor].forEach(el => {
-    if (el) {
-      el.addEventListener('change', () => {
-        if (currentFiles.length > 0) renderPreviewForFiles(currentFiles);
-      });
-    }
-  });
-
-  if (bgImageInput) {
-    bgImageInput.addEventListener('change', (e) => {
-      bgImageObj = null;
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const r = new FileReader();
-      r.onload = async (ev) => {
-        try {
-          bgImageObj = await loadImage(ev.target.result);
-          if (currentFiles.length > 0) renderPreviewForFiles(currentFiles);
-        } catch (err) {
-          bgImageObj = null;
-          console.error('bg image load err', err);
-        }
-      };
-      r.readAsDataURL(file);
-    });
-  }
-
-  // Drag and Drop
   window.addEventListener('dragover', (e) => e.preventDefault());
-  window.addEventListener('drop', async (e) => {
+  window.addEventListener('drop', (e) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const filesArr = fileListToArray(e.dataTransfer.files);
-      await renderPreviewForFiles(filesArr);
+      const imageFiles = filesArr.filter(f => f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.heic') || f.name.toLowerCase().endsWith('.heif'));
+      allGroupedFiles = { "Drop Foto": imageFiles };
+      folderConfigs = {};
+      renderBatchSummary();
     }
   });
 
