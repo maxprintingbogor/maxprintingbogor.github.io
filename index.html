@@ -474,7 +474,6 @@ select:focus, input[type="text"]:focus {
           <option value="white">Putih</option>
           <option value="black">Hitam</option>
           <option value="gray">Abu-abu</option>
-          <option value="cream">Cream</option>
           <option value="pink">Pink</option>
           <option value="blue">Biru</option>
           <option value="custom">Custom Warna</option>
@@ -506,7 +505,7 @@ select:focus, input[type="text"]:focus {
 
   <!-- Alert Info -->
   <div class="alert-info" id="downloadWarning" style="display:none;">
-    💡 <b>Sistem Cerdas:</b> Nama file PDF otomatis memuat mode cetak, ukuran cetak, warna background & jumlah lembar A3 untuk memudahkan identifikasi cetak.
+    💡 <b>Sistem Cerdas (Fuzzy AI):</b> Otomatis mendeteksi opsi typo pada nama folder, & Margin Warna selalu 100% berbeda untuk tiap PDF.
   </div>
 
   <!-- Progress Container -->
@@ -530,7 +529,7 @@ select:focus, input[type="text"]:focus {
   </div>
 
   <div class="footer-info">
-    Polaroid Layout Automation Engine v2.6 (Modern UI + Fit To Sheet)
+    Polaroid Layout Automation Engine v3.0 (Fuzzy AI + Real Gray + True Random Margin)
   </div>
 
 </div>
@@ -574,7 +573,6 @@ select:focus, input[type="text"]:focus {
   let nameMapping = {}; 
   let folderConfigs = {}; 
   let bgImageObj = null;
-  const autoColors = ["#ff0000","#00b050","#0070c0","#7030a0","#FFDC00","#00EAFF","#ff69b4","#828282","#C28FF3","#91E7FF"];
   
   const layoutConfig = {
     "6x9": {margin:0.5, border:0.5, bottom:1.5, w:6, h:9, pageW:32, pageH:48},
@@ -605,7 +603,6 @@ select:focus, input[type="text"]:focus {
     "white": "Putih",
     "black": "Hitam",
     "gray": "Abu",
-    "cream": "Cream",
     "pink": "Pink",
     "blue": "Biru",
     "custom": "Custom",
@@ -632,8 +629,7 @@ select:focus, input[type="text"]:focus {
     const colorMap = {
       'white': [255, 255, 255],
       'black': [0, 0, 0],
-      'gray': [128, 128, 128],
-      'cream': [255, 253, 208],
+      'gray': [190, 190, 190], // Warna abu-abu (silver) yang lebih natural & terang saat dicetak
       'pink': [255, 192, 203],
       'blue': [65, 105, 225]
     };
@@ -670,7 +666,6 @@ select:focus, input[type="text"]:focus {
     return Math.max(1, cols * rows);
   }
 
-  // LOGIKA FIT TO SHEET (PEMBULATAN FOTO)
   function getAdjustedFiles(rawFiles, sizeKey, fitMode) {
     if (!rawFiles || rawFiles.length === 0) return [];
     const perPage = getPerPageCount(sizeKey);
@@ -685,14 +680,14 @@ select:focus, input[type="text"]:focus {
       const needed = perPage - remainder;
       const result = [...rawFiles];
       for (let i = 0; i < needed; i++) {
-        result.push(rawFiles[i % total]); // Duplikat foto dari urutan awal
+        result.push(rawFiles[i % total]);
       }
       return result;
     }
 
     if (fitMode === 'trim') {
       const validCount = Math.floor(total / perPage) * perPage;
-      if (validCount === 0) return [...rawFiles]; // Cegah terpotong sampai habis (0 foto)
+      if (validCount === 0) return [...rawFiles];
       return rawFiles.slice(0, validCount);
     }
 
@@ -705,31 +700,83 @@ select:focus, input[type="text"]:focus {
     return Math.ceil(photoCount / perPage);
   }
 
+  // ALGORITMA FUZZY MATCHING (MENDETEKSI TYPO)
+  function similarityScore(s1, s2) {
+    let longer = s1.toLowerCase(), shorter = s2.toLowerCase();
+    if (s1.length < s2.length) { longer = s2.toLowerCase(); shorter = s1.toLowerCase(); }
+    let longerLength = longer.length;
+    if (longerLength === 0) return 1.0;
+    
+    let costs = new Array();
+    for (let i = 0; i <= longer.length; i++) {
+      let lastValue = i;
+      for (let j = 0; j <= shorter.length; j++) {
+        if (i === 0) costs[j] = j;
+        else if (j > 0) {
+          let newValue = costs[j - 1];
+          if (longer.charAt(i - 1) !== shorter.charAt(j - 1))
+            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+          costs[j - 1] = lastValue;
+          lastValue = newValue;
+        }
+      }
+      if (i > 0) costs[shorter.length] = lastValue;
+    }
+    return (longerLength - costs[shorter.length]) / parseFloat(longerLength);
+  }
+
+  // DETEKSI OTOMATIS CERDAS ( DIPERBAIKI AGAR TIDAK SALAH DETEKSI KATA SEPERTI "ABUL" )
   function detectConfigFromPath(path) {
-    const lower = path.toLowerCase();
+    const words = path.toLowerCase().split(/[^a-z0-9.]+/).filter(Boolean);
     let style = styleSelect.value;
     let size = sizeSelect.value;
     let fit = fitSelect.value;
     let bg = bgSelect.value;
     let detectedInfo = [];
 
-    if (lower.includes('full')) { style = 'full'; detectedInfo.push('Full'); }
-    else if (lower.includes('polaroid')) { style = 'polaroid'; detectedInfo.push('Polaroid'); }
+    const styleTargets = [
+      { name: 'full', label: 'Full', keywords: ['full', 'gambar', 'ful', 'fulg', 'gmr'] },
+      { name: 'polaroid', label: 'Polaroid', keywords: ['polaroid', 'poloroid', 'pola', 'plroid', 'pld'] }
+    ];
 
-    if (/\b2r\b/.test(lower) || lower.includes('6x9')) { size = '6x9'; detectedInfo.push('2R'); }
-    else if (/\b3r\b/.test(lower) || lower.includes('8.9x12.7')) { size = '8.9x12.7'; detectedInfo.push('3R'); }
-    else if (/\b4r\b/.test(lower) || lower.includes('10.2x15.2')) { size = '10.2x15.2'; detectedInfo.push('4R'); }
-    else if (/\b5r\b/.test(lower) || lower.includes('12.7x17.8')) { size = '12.7x17.8'; detectedInfo.push('5R'); }
-    else if (/\b6r\b/.test(lower) || lower.includes('15.2x20.3')) { size = '15.2x20.3'; detectedInfo.push('6R'); }
-    else if (/\b8r\b/.test(lower) || lower.includes('20.3x25.4')) { size = '20.3x25.4'; detectedInfo.push('8R'); }
-    else if (/\b10r\b/.test(lower) || lower.includes('25.4x30.5')) { size = '25.4x30.5'; detectedInfo.push('10R'); }
+    const bgTargets = [
+      { name: 'black', label: 'Hitam', keywords: ['hitam', 'black', 'htam', 'htm', 'blk'] },
+      { name: 'white', label: 'Putih', keywords: ['putih', 'white', 'ptih', 'pth', 'wht'] },
+      { name: 'gray', label: 'Abu-abu', keywords: ['abu', 'gray', 'grey'] },
+      { name: 'pink', label: 'Pink', keywords: ['pink', 'pnk', 'ping'] },
+      { name: 'blue', label: 'Biru', keywords: ['biru', 'blue', 'bru'] }
+    ];
 
-    if (lower.includes('hitam') || lower.includes('black')) { bg = 'black'; detectedInfo.push('Hitam'); }
-    else if (lower.includes('putih') || lower.includes('white')) { bg = 'white'; detectedInfo.push('Putih'); }
-    else if (lower.includes('abu') || lower.includes('gray')) { bg = 'gray'; detectedInfo.push('Abu-abu'); }
-    else if (lower.includes('cream') || lower.includes('krem')) { bg = 'cream'; detectedInfo.push('Cream'); }
-    else if (lower.includes('pink')) { bg = 'pink'; detectedInfo.push('Pink'); }
-    else if (lower.includes('biru') || lower.includes('blue')) { bg = 'blue'; detectedInfo.push('Biru'); }
+    words.forEach(w => {
+      styleTargets.forEach(t => {
+        t.keywords.forEach(k => {
+          // Menggunakan exact match atau kemiripan tinggi (> 0.8) agar tidak salah deteksi potongan huruf
+          if (w === k || similarityScore(w, k) >= 0.8) {
+            style = t.name;
+            if (!detectedInfo.includes(t.label)) detectedInfo.push(t.label);
+          }
+        });
+      });
+
+      bgTargets.forEach(b => {
+        b.keywords.forEach(k => {
+          // Menggunakan exact match atau kemiripan tinggi (> 0.8)
+          if (w === k || similarityScore(w, k) >= 0.8) {
+            bg = b.name;
+            if (!detectedInfo.includes(b.label)) detectedInfo.push(b.label);
+          }
+        });
+      });
+    });
+
+    const lowerPath = path.toLowerCase();
+    if (/\b2r\b|6x9/.test(lowerPath)) { size = '6x9'; detectedInfo.push('2R'); }
+    else if (/\b3r\b|8\.9|12\.7/.test(lowerPath)) { size = '8.9x12.7'; detectedInfo.push('3R'); }
+    else if (/\b4r\b|10\.2|15\.2/.test(lowerPath)) { size = '10.2x15.2'; detectedInfo.push('4R'); }
+    else if (/\b5r\b|12\.7|17\.8/.test(lowerPath)) { size = '12.7x17.8'; detectedInfo.push('5R'); }
+    else if (/\b6r\b|15\.2|20\.3/.test(lowerPath)) { size = '15.2x20.3'; detectedInfo.push('6R'); }
+    else if (/\b8r\b|20\.3|25\.4/.test(lowerPath)) { size = '20.3x25.4'; detectedInfo.push('8R'); }
+    else if (/\b10r\b|25\.4|30\.5/.test(lowerPath)) { size = '25.4x30.5'; detectedInfo.push('10R'); }
 
     return { style, size, fit, bg, isAutoDetected: detectedInfo.length > 0, detectedStr: detectedInfo.join(', ') };
   }
@@ -923,7 +970,6 @@ select:focus, input[type="text"]:focus {
             <option value="white" ${cfg.bg === 'white' ? 'selected' : ''}>Putih</option>
             <option value="black" ${cfg.bg === 'black' ? 'selected' : ''}>Hitam</option>
             <option value="gray" ${cfg.bg === 'gray' ? 'selected' : ''}>Abu-abu</option>
-            <option value="cream" ${cfg.bg === 'cream' ? 'selected' : ''}>Cream</option>
             <option value="pink" ${cfg.bg === 'pink' ? 'selected' : ''}>Pink</option>
             <option value="blue" ${cfg.bg === 'blue' ? 'selected' : ''}>Biru</option>
           </select>
@@ -1039,8 +1085,27 @@ select:focus, input[type="text"]:focus {
     controls.forEach(el => el.disabled = isLocked);
   }
 
-  async function processAndDownloadPDF(rawFiles, combinedNameStr, cfg) {
-    // PROSES FIT TO SHEET (DUPLIKAT / TRIMMING FOTO)
+  // ALGORITMA GOLDEN ANGLE: GENERATOR WARNA MARGIN ACAK TAK TERBATAS DAN SELALU KONTRAS
+  function getDistinctVibrantColor(index) {
+    // 137.508 adalah Sudut Emas (Golden Angle). 
+    // Mengalikan index dengan sudut ini menjamin hue/warna akan selalu tersebar merata dan tidak pernah berdekatan
+    const hue = (index * 137.508) % 360; 
+    const saturation = 90; // Saturasi cerah 90%
+    const lightness = 50;  // Pencahayaan tengah 50% untuk warna maksimal
+    
+    const s = saturation / 100;
+    const l = lightness / 100;
+    const a = s * Math.min(l, 1 - l);
+    
+    const f = n => {
+      const k = (n + hue / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color);
+    };
+    return [f(0), f(8), f(4)];
+  }
+
+  async function processAndDownloadPDF(rawFiles, combinedNameStr, cfg, colorIndex) {
     const targetRawFiles = getAdjustedFiles(rawFiles, cfg.size, cfg.fit);
 
     let readyFiles = [];
@@ -1080,11 +1145,12 @@ select:focus, input[type="text"]:focus {
     let finalCaption = prefix ? `${prefix} ${combinedNameStr}` : combinedNameStr;
     const safeCaption = finalCaption.replace(/[\\\/:*?"<>|\r\n]/g,"_");
     
-    // FORMAT NAMA FILE PDF BARU
     const fileName = `${safeCaption} - ${styleLabel} - ${sizeLabel} - ${bgLabel} - ${lembar} lembar.pdf`;
     
     const pageBgRgb = getColorRgb(cfg.bg, customColor ? customColor.value : null);
-    const [marR, marG, marB] = autoColors[Math.floor(Math.random() * autoColors.length)].match(/\w\w/g).map(x=>parseInt(x,16));
+    
+    // PEMANGGILAN WARNA MARGIN BERDASARKAN URUTAN (INDEX)
+    const [marR, marG, marB] = getDistinctVibrantColor(colorIndex);
 
     const bgLuminance = (pageBgRgb[0] * 299 + pageBgRgb[1] * 587 + pageBgRgb[2] * 114) / 1000;
     const markColor = bgLuminance < 128 ? [255, 255, 255] : [0, 0, 0];
@@ -1182,7 +1248,8 @@ select:focus, input[type="text"]:focus {
         progressBar.style.width = percent + "%";
         progressPercent.textContent = percent + "%";
 
-        let result = await processAndDownloadPDF(files, combinedNameStr, cfg);
+        // MENGIRIM INDEX 'd' AGAR WARNA MARGIN PASTI BERBEDA
+        let result = await processAndDownloadPDF(files, combinedNameStr, cfg, d);
 
         if(statusEl) {
           statusEl.textContent = result.success ? "Selesai ✓" : "Gagal";
