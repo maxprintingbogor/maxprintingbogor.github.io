@@ -725,7 +725,6 @@ select:focus, input[type="text"]:focus {
     return (longerLength - costs[shorter.length]) / parseFloat(longerLength);
   }
 
-  // DETEKSI OTOMATIS CERDAS ( DIPERBAIKI AGAR TIDAK SALAH DETEKSI KATA SEPERTI "ABUL" )
   function detectConfigFromPath(path) {
     const words = path.toLowerCase().split(/[^a-z0-9.]+/).filter(Boolean);
     let style = styleSelect.value;
@@ -750,7 +749,6 @@ select:focus, input[type="text"]:focus {
     words.forEach(w => {
       styleTargets.forEach(t => {
         t.keywords.forEach(k => {
-          // Menggunakan exact match atau kemiripan tinggi (> 0.8) agar tidak salah deteksi potongan huruf
           if (w === k || similarityScore(w, k) >= 0.8) {
             style = t.name;
             if (!detectedInfo.includes(t.label)) detectedInfo.push(t.label);
@@ -760,7 +758,6 @@ select:focus, input[type="text"]:focus {
 
       bgTargets.forEach(b => {
         b.keywords.forEach(k => {
-          // Menggunakan exact match atau kemiripan tinggi (> 0.8)
           if (w === k || similarityScore(w, k) >= 0.8) {
             bg = b.name;
             if (!detectedInfo.includes(b.label)) detectedInfo.push(b.label);
@@ -1048,9 +1045,31 @@ select:focus, input[type="text"]:focus {
 
   if(uploadFolderBtn && uploadFolder){
     uploadFolderBtn.addEventListener('click', ()=>{ uploadFolder.value = ""; uploadFolder.click(); });
-    uploadFolder.addEventListener('change', (e)=>{
+    uploadFolder.addEventListener('change', async (e)=>{
+      progressContainer.style.display = "block";
+      progressText.textContent = "Mengkonversi HEIC/HEIF ke JPG, mohon tunggu...";
+      progressBar.style.width = "50%";
+
       const filesArr = fileListToArray(e.target.files || []);
       const imageFiles = filesArr.filter(f => f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.heic') || f.name.toLowerCase().endsWith('.heif'));
+
+      for (let i = 0; i < imageFiles.length; i++) {
+        let file = imageFiles[i];
+        let fname = file.name.toLowerCase();
+        if (fname.endsWith('.heic') || fname.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
+          try {
+            let convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.7 });
+            if (Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
+            
+            let newFile = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
+            Object.defineProperty(newFile, 'webkitRelativePath', { value: file.webkitRelativePath });
+            
+            imageFiles[i] = newFile; 
+          } catch(err) {
+            console.error("Gagal convert HEIC saat upload:", file.name, err);
+          }
+        }
+      }
 
       imageFiles.sort((a,b)=>{
         const pa = a.webkitRelativePath || a.name;
@@ -1067,16 +1086,42 @@ select:focus, input[type="text"]:focus {
           allGroupedFiles[dir].push(file);
       });
       renderBatchSummary();
+
+      progressContainer.style.display = "none";
+      progressBar.style.width = "0%";
     });
   }
 
   if(uploadFilesBtn && uploadFiles){
     uploadFilesBtn.addEventListener('click', ()=>{ uploadFiles.value = ""; uploadFiles.click(); });
-    uploadFiles.addEventListener('change', (e)=>{
+    uploadFiles.addEventListener('change', async (e)=>{
+      progressContainer.style.display = "block";
+      progressText.textContent = "Mengkonversi HEIC/HEIF ke JPG...";
+      progressBar.style.width = "50%";
+
       const filesArr = fileListToArray(e.target.files || []);
-      allGroupedFiles = { "Upload Langsung": filesArr };
+      const imageFiles = filesArr.filter(f => f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.heic') || f.name.toLowerCase().endsWith('.heif'));
+
+      for (let i = 0; i < imageFiles.length; i++) {
+        let file = imageFiles[i];
+        let fname = file.name.toLowerCase();
+        if (fname.endsWith('.heic') || fname.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
+          try {
+            let convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.7 });
+            if (Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
+            imageFiles[i] = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
+          } catch(err) {
+            console.error("Gagal convert HEIC saat upload:", file.name, err);
+          }
+        }
+      }
+
+      allGroupedFiles = { "Upload Langsung": imageFiles };
       folderConfigs = {};
       renderBatchSummary();
+
+      progressContainer.style.display = "none";
+      progressBar.style.width = "0%";
     });
   }
 
@@ -1085,13 +1130,10 @@ select:focus, input[type="text"]:focus {
     controls.forEach(el => el.disabled = isLocked);
   }
 
-  // ALGORITMA GOLDEN ANGLE: GENERATOR WARNA MARGIN ACAK TAK TERBATAS DAN SELALU KONTRAS
   function getDistinctVibrantColor(index) {
-    // 137.508 adalah Sudut Emas (Golden Angle). 
-    // Mengalikan index dengan sudut ini menjamin hue/warna akan selalu tersebar merata dan tidak pernah berdekatan
     const hue = (index * 137.508) % 360; 
-    const saturation = 90; // Saturasi cerah 90%
-    const lightness = 50;  // Pencahayaan tengah 50% untuk warna maksimal
+    const saturation = 90; 
+    const lightness = 50;  
     
     const s = saturation / 100;
     const l = lightness / 100;
@@ -1106,24 +1148,7 @@ select:focus, input[type="text"]:focus {
   }
 
   async function processAndDownloadPDF(rawFiles, combinedNameStr, cfg, colorIndex) {
-    const targetRawFiles = getAdjustedFiles(rawFiles, cfg.size, cfg.fit);
-
-    let readyFiles = [];
-    for(let i=0; i<targetRawFiles.length; i++) {
-      let file = targetRawFiles[i];
-      let fname = file.name.toLowerCase();
-      if(fname.endsWith('.heic') || fname.endsWith('.heif') || file.type === 'image/heic') {
-        try {
-          let convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.7 });
-          if(Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
-          file = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
-        } catch(err) {
-          console.error("Gagal HEIC:", file.name, err);
-          continue; 
-        }
-      }
-      readyFiles.push(file);
-    }
+    const readyFiles = getAdjustedFiles(rawFiles, cfg.size, cfg.fit);
 
     if (readyFiles.length === 0) return { success: false, lembar: 0 };
 
@@ -1149,7 +1174,6 @@ select:focus, input[type="text"]:focus {
     
     const pageBgRgb = getColorRgb(cfg.bg, customColor ? customColor.value : null);
     
-    // PEMANGGILAN WARNA MARGIN BERDASARKAN URUTAN (INDEX)
     const [marR, marG, marB] = getDistinctVibrantColor(colorIndex);
 
     const bgLuminance = (pageBgRgb[0] * 299 + pageBgRgb[1] * 587 + pageBgRgb[2] * 114) / 1000;
@@ -1248,7 +1272,6 @@ select:focus, input[type="text"]:focus {
         progressBar.style.width = percent + "%";
         progressPercent.textContent = percent + "%";
 
-        // MENGIRIM INDEX 'd' AGAR WARNA MARGIN PASTI BERBEDA
         let result = await processAndDownloadPDF(files, combinedNameStr, cfg, d);
 
         if(statusEl) {
@@ -1305,14 +1328,38 @@ select:focus, input[type="text"]:focus {
   }
 
   window.addEventListener('dragover', (e) => e.preventDefault());
-  window.addEventListener('drop', (e) => {
+  window.addEventListener('drop', async (e) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      
+      // Tambahan: Fitur convert otomatis untuk jalur Drag & Drop juga!
+      progressContainer.style.display = "block";
+      progressText.textContent = "Mengkonversi HEIC/HEIF ke JPG...";
+      progressBar.style.width = "50%";
+
       const filesArr = fileListToArray(e.dataTransfer.files);
       const imageFiles = filesArr.filter(f => f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.heic') || f.name.toLowerCase().endsWith('.heif'));
+
+      for (let i = 0; i < imageFiles.length; i++) {
+        let file = imageFiles[i];
+        let fname = file.name.toLowerCase();
+        if (fname.endsWith('.heic') || fname.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif') {
+          try {
+            let convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.7 });
+            if (Array.isArray(convertedBlob)) convertedBlob = convertedBlob[0];
+            imageFiles[i] = new File([convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
+          } catch(err) {
+            console.error("Gagal convert HEIC saat drop:", file.name, err);
+          }
+        }
+      }
+
       allGroupedFiles = { "Drop Foto": imageFiles };
       folderConfigs = {};
       renderBatchSummary();
+      
+      progressContainer.style.display = "none";
+      progressBar.style.width = "0%";
     }
   });
 
